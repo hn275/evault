@@ -1,86 +1,96 @@
+import time
+from urllib.parse import urlencode
+import json
+import requests
 import argparse
-import re
-import pathlib
-from typing import List, Optional
+from repository import parse_remotes
+from shared.types import AuthToken, AuthData
+
+
+SERVER = "http://127.0.0.1:8000"
+AUTH_MAX_RETRY_ATTEMPT = 10
 
 # ARG PARSER
 ALLOW_COMMANDS = ["push", "pull", "check"]
 parser = argparse.ArgumentParser()
 parser.add_argument("command", choices=ALLOW_COMMANDS)
 
-# REPO PARSER
-# Regex pattern to match username/repo from Git URLs
-GIT_URL_PATTERN = re.compile(
-    r"(?:https?://[^/]+/|git@[^:]+:)([^/]+)/([^/\s]+?)(?:\.git)?/?$"
-)
 
+def get_access_token() -> AuthToken:
+    r = requests.get(f"{SERVER}/api/auth?device_type=cli")
+    assert r.status_code == 200
 
-def extract_username_repo(git_url: str) -> Optional[str]:
-    """
-    Extract username and repository name from Git clone URLs.
+    data = r.json()
+    client_id, authURL = data["client-id"], data["auth-url"]
 
-    Supports both SSH and HTTPS formats:
-    - https://github.com/username/repo.git
-    - https://github.com/username/repo
-    - git@github.com:username/repo.git
-    - git@github.com:username/repo
-    """
-    match = re.match(GIT_URL_PATTERN, git_url.strip())
-    if match:
-        username = match.group(1)
-        repo = match.group(2)
-        return f"{username}/{repo}"
-    return None
+    r = requests.post(authURL, headers={"Accept": "application/json"})
+    assert r.status_code == 200
 
+    data = r.json()
+    auth_content = AuthData(
+        device_code=data["device_code"],
+        user_code=data["user_code"],
+        verification_uri=data["verification_uri"],
+        expires_in=data["expires_in"],
+        interval=data["interval"],
+    )
 
-type Remote = tuple[str, str]
+    print(
+        f"To authenticate, go to https://github.com/login/device and enter the code {auth_content.user_code}"
+    )
 
+    # polls github for access token
+    p = {
+        "client_id": client_id,
+        "device_code": auth_content.device_code,
+        "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+    }
+    headers = {"Accept": "application/json"}
 
-def parse_remotes() -> List[Remote]:
-    out = []
-    remote_regex = re.compile(r'\[remote "([^"]+)"\]')
-    url_regex = re.compile(r"\s*url\s*=\s*(.+)")
-    config_file = pathlib.Path(".git/config")
+    url = f"https://github.com/login/oauth/access_token?{urlencode(p)}"
 
-    with open(config_file, "r") as file:
-        while True:
-            line = file.readline()
-            if line == "":
-                break
+    # TODO: change this to time based instead of retry based (somehow)
+    # can leverage the math MAX_TIME / interval?
+    attempt = 0
+    while True:
+        assert attempt <= AUTH_MAX_RETRY_ATTEMPT
+        attempt += 1
 
-            matched = remote_regex.match(line)
-            if not matched:
+        r = requests.post(url, headers=headers)
+
+        assert r.status_code == 200
+        data = r.json()
+
+        if "error" in data:
+            if data["error"] == "authorization_pending":
+                time.sleep(auth_content.interval)
                 continue
+            else:
+                raise Exception(data["error_description"])
 
-            remote_name = matched.group(1)
-            line = file.readline()
-            if line == "":
-                raise IOError(f"invalid {config_file} file")
-
-            url_matched = url_regex.match(line)
-            if not url_matched:
-                raise IOError(
-                    f"invalid repository url for remote '{remote_name}' in {config_file} file"
-                )
-            url_matched = url_matched.group(1)
-
-            remote_url = extract_username_repo(url_matched)
-            if remote_url == None:
-                raise IOError(
-                    f"invalid repository url for remote '{remote_name}' in {config_file} file"
-                )
-            out.append((remote_name, remote_url))
-
-    return out
+        return AuthToken(
+            access_token=data["access_token"],
+            token_type=data["token_type"],
+            scope=data["scope"],
+        )
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    print(args.command)
     cmd = args.command.lower()
-    if cmd not in ALLOW_COMMANDS:
-        print(f"ERROR: Invalid command to execute.")
-        exit(1)
+    cred_file = open("evault-credentials.json", "w")
+
+    # Authentication
+    access_token = get_access_token()
+    r = requests.get(f"{SERVER}/api/auth/user?{urlencode(access_token.__dict__)}")
+    assert r.status_code == 200
+
+    credentials = {
+        "user": r.json(),
+        "token": access_token.__dict__,
+    }
+    d = json.dumps(credentials)
+    cred_file.write(d)
 
     try:
         repos = parse_remotes()

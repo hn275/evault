@@ -1,0 +1,12 @@
+[project]
+name = "evault"
+version = "0.1.0"
+description = "Shareable vault for environment variables"
+authors = [{ name = "Hal Nguyen", email = "haln_01@proton.me" }]
+dependencies = []
+
+[tool.setuptools]
+package-dir = { "" = "." }
+
+[tool.setuptools.packages.find]
+where = ["."]
