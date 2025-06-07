@@ -4,7 +4,7 @@ import json
 import requests
 import argparse
 from repository import parse_remotes
-from shared.types import AuthToken, AuthData, GitHubUser
+from shared.types import GithubAuthToken, AuthDataDevice, GitHubUser
 
 
 SERVER = "http://127.0.0.1:8000"
@@ -27,23 +27,24 @@ def get_access_token() -> GitHubUser:
     assert r.status_code == 200
 
     data = r.json()
-    auth_content = AuthData(
+    auth_content = AuthDataDevice(
         device_code=data["device_code"],
-        user_code=data["user_code"],
-        verification_uri=data["verification_uri"],
         expires_in=data["expires_in"],
         interval=data["interval"],
     )
+    user_code = data["user_code"]
 
     print(
-        f"To authenticate, go to https://github.com/login/device and enter the code {auth_content.user_code}"
+        f"To authenticate, go to the url "
+        f"https://github.com/login/device and enter the code {user_code}"
     )
 
     # get user information from server
-    r = requests.get(f"{SERVER}/api/auth/user?{urlencode(auth_content.__dict__)}")
+    r = requests.get(f"{SERVER}/api/auth/device?{urlencode(auth_content.__dict__)}")
     assert r.status_code == 200
 
     d = r.json()
+    print(r.headers["set-cookie"])
 
     return GitHubUser(
         id=d["id"],

@@ -1,31 +1,22 @@
-import json, time, requests, os
+import json, time, requests, os, math, secrets
 from urllib.parse import urlencode
 from typing import Literal, Optional
 import fastapi
-
-from requests import request
-from shared.types import AuthToken, GitHubUser
+from shared.types import GithubAuthToken, GitHubUser
+from .cache import Cache, REDIS_HOST
 
 
 app = fastapi.FastAPI()
+redis = Cache(REDIS_HOST)
 GITHUB_OAUTH_CLIENT_ID = os.environ["GITHUB_OAUTH_CLIENT_ID"]
 GITHUB_OAUTH_CLIENT_SECRET = os.environ["GITHUB_OAUTH_CLIENT_SECRET"]
-AUTH_MAX_RETRY_ATTEMPT = 10
+EVAULT_SESSION_TOK_EXP = 300
 
-
-@app.get("/")
-async def root():
-    response = fastapi.Response(
-        content="Hello, World!",
-        status_code=200,
-        media_type="text/plain",
-    )
-
-    return response
+type DeviceType = Literal["web", "cli"]
 
 
 @app.get("/api/auth")
-async def auth(device_type: Literal["web", "cli"]):
+async def auth(device_type: DeviceType):
     if device_type == "web":
         raise NotImplemented
     else:
@@ -38,11 +29,11 @@ async def auth(device_type: Literal["web", "cli"]):
         )
 
 
-@app.get("/api/auth/user")
+@app.get("/api/auth/device")
 def auth_github(
     device_code: str,
-    user_code: str,
-    verification_uri: str,
+    # user_code: str,
+    # verification_uri: str,
     expires_in: int,
     interval: int,
 ):
@@ -56,16 +47,16 @@ def auth_github(
 
     url = f"https://github.com/login/oauth/access_token?{urlencode(p)}"
     attempt = 0
-    auth_token: Optional[AuthToken] = None
-    # TODO: change this to time based instead of retry based (somehow)
-    # can leverage the math MAX_TIME / interval?
-    while attempt <= AUTH_MAX_RETRY_ATTEMPT:
+    gh_oauth_tok: Optional[GithubAuthToken] = None
+
+    max_attempts = math.ceil(expires_in / interval)
+    while attempt <= max_attempts:
         attempt += 1
 
-        r = requests.post(url, headers=headers)
+        req = requests.post(url, headers=headers)
 
-        assert r.status_code == 200
-        data = r.json()
+        assert req.status_code == 200
+        data = req.json()
 
         if "error" in data:
             if data["error"] == "authorization_pending":
@@ -76,14 +67,14 @@ def auth_github(
                     status_code=403, content=data["error_description"]
                 )
 
-        auth_token = AuthToken(
+        gh_oauth_tok = GithubAuthToken(
             access_token=data["access_token"],
             token_type=data["token_type"],
             scope=data["scope"],
         )
         break
 
-    if auth_token == None:
+    if gh_oauth_tok == None:
         return fastapi.Response(
             status_code=403, content="Request for user's information timed out."
         )
@@ -91,12 +82,20 @@ def auth_github(
     # get user information
     url = f"https://api.github.com/user"
     headers = {
-        "Authorization": f"{auth_token.token_type} {auth_token.access_token}",
+        "Authorization": f"{gh_oauth_tok.token_type} {gh_oauth_tok.access_token}",
         "Accept": "application/json",
     }
-    response = requests.get(url, headers=headers)
 
-    data = response.json()
+    req = requests.get(url, headers=headers)
+    assert req.status_code == 200
+
+    # create an evault access token, then cache it
+    evault_access_token = secrets.token_urlsafe(32)
+    redis.cache_user_token(
+        evault_access_token, gh_oauth_tok.access_token, EVAULT_SESSION_TOK_EXP
+    )
+
+    data = req.json()
     github_user = GitHubUser(
         id=data["id"],
         login=data["login"],
@@ -105,6 +104,10 @@ def auth_github(
     )
     body = json.dumps(github_user.__dict__)
 
-    response = fastapi.Response(content=body, media_type="application/json")
-    response.set_cookie(key="user-id", value=f"{github_user.id}", expires=100)
-    return response
+    res = fastapi.Response(content=body, media_type="application/json")
+    res.set_cookie(
+        key="evault_access_token",
+        value=evault_access_token,
+        expires=EVAULT_SESSION_TOK_EXP,
+    )
+    return res

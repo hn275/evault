@@ -2,16 +2,14 @@ from dataclasses import dataclass
 
 
 @dataclass
-class AuthData:
+class AuthDataDevice:
     device_code: str
-    user_code: str
-    verification_uri: str
     expires_in: int
     interval: int
 
 
 @dataclass
-class AuthToken:
+class GithubAuthToken:
     access_token: str
     token_type: str
     scope: str
