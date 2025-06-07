@@ -59,7 +59,7 @@ async def auth_github(
     gh_oauth_tok: Optional[GithubAuthToken] = None
 
     max_attempts = math.ceil(expires_in / interval)
-    while attempt <= 2:
+    while attempt <= max_attempts:
         attempt += 1
 
         req = requests.post(url, headers=headers)
