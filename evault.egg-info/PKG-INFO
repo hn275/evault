@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: evault
+Version: 0.1.0
+Summary: Shareable vault for environment variables
+Author-email: Hal Nguyen <haln_01@proton.me>
+License-File: LICENSE
+Dynamic: license-file
