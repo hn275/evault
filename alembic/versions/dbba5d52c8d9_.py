@@ -25,6 +25,7 @@ def upgrade() -> None:
         "users",
         sa.Column("user_id", sa.NotNullable(sa.Integer)),
         sa.Column("github_access_token", sa.NotNullable(sa.String)),
+        sa.Column("master_password", sa.NotNullable(sa.String)),
     )
 
 
