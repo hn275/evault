@@ -1,12 +1,13 @@
-import time
+from dataclasses import dataclass
+import os
+from typing import Optional, Tuple
 from urllib.parse import urlencode
-import json
-import requests
-import argparse
+import requests, argparse, pathlib
 from repository import parse_remotes
 from shared.types import GithubAuthToken, AuthDataDevice, GitHubUser
 
 
+CREDENTIALS_PATH = pathlib.Path("/tmp/evault/evault-access-token")
 SERVER = "http://127.0.0.1:8000"
 
 # ARG PARSER
@@ -14,25 +15,34 @@ ALLOW_COMMANDS = ["push", "pull", "check"]
 parser = argparse.ArgumentParser()
 parser.add_argument("command", choices=ALLOW_COMMANDS)
 
+session = requests.Session()
 
-def get_access_token() -> GitHubUser:
+
+@dataclass
+class Credentials:
+    evault_access_tok: str
+    user_login: str
+
+
+def get_credentials() -> Credentials:
+    """
+    returns a tuple of (evault-access-token, user-login)
+    """
     r = requests.get(f"{SERVER}/api/auth?device_type=cli")
-    print(r.headers)
     assert r.status_code == 200
 
     authURL = r.content.decode()
-    print(f"received url: {authURL}")
 
     r = requests.post(authURL, headers={"Accept": "application/json"})
     assert r.status_code == 200
 
-    data = r.json()
+    d = r.json()
     auth_content = AuthDataDevice(
-        device_code=data["device_code"],
-        expires_in=data["expires_in"],
-        interval=data["interval"],
+        device_code=d["device_code"],
+        expires_in=d["expires_in"],
+        interval=d["interval"],
     )
-    user_code = data["user_code"]
+    user_code = d["user_code"]
 
     print(
         f"To authenticate, go to the url "
@@ -43,15 +53,45 @@ def get_access_token() -> GitHubUser:
     r = requests.get(f"{SERVER}/api/auth/device?{urlencode(auth_content.__dict__)}")
     assert r.status_code == 200
 
-    d = r.json()
-    print(r.headers["set-cookie"])
+    print("\tSuccess! Access token issued.")
 
-    return GitHubUser(
-        id=d["id"],
-        name=d["name"],
-        login=d["login"],
-        type=d["type"],
+    d = r.json()
+    return Credentials(
+        evault_access_tok=d["evault-access-token"], user_login=d["user-login"]
     )
+
+
+def check_credentials(
+    credentials_path: pathlib.Path,
+) -> Optional[Credentials]:
+    """
+    returns the evault-access-token if it's not expired, None otherwise
+    """
+    print("Checking credentials...")
+    try:
+        with open(credentials_path, "r") as file:
+            token = file.read()
+            print("\tExisting credentials found, revalidating token...")
+            r = session.get(
+                f"{SERVER}/api/auth/check?{urlencode({'token': token, 'device_type': 'cli'})}"
+            )
+
+            if r.status_code == 403:
+                print("\r\tSession expired.")
+                # os.remove(CREDENTIALS_PATH)
+                return None
+            elif r.status_code != 200:
+                raise Exception(f"Server error: {r.status_code}")
+
+            d = r.json()
+            print("\r\tSuccess! Token refreshed")
+            return Credentials(
+                evault_access_tok=d["evault-access-token"], user_login=d["user-login"]
+            )
+
+    except FileNotFoundError as e:
+        print("\r\tToken not found / Not authenticated.")
+        return None
 
 
 if __name__ == "__main__":
@@ -59,8 +99,16 @@ if __name__ == "__main__":
     cmd = args.command.lower()
 
     # Authentication
-    access_token = get_access_token()
-    print(access_token)
+    credentials = check_credentials(CREDENTIALS_PATH)
+    if credentials == None:
+        print("Authenticating...")
+        credentials = get_credentials()
+        with open(CREDENTIALS_PATH, "w") as f:
+            f.write(credentials.evault_access_tok)
+
+    token, user_login = credentials.evault_access_tok, credentials.user_login
+    print(f"\tUser authenticated: {user_login}")
+    print()
 
     try:
         repos = parse_remotes()
