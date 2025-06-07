@@ -5,6 +5,7 @@
 Install all project deps.
 
 ```sh
+pip install -e . # idk why but it won't import without doing this...
 pip install -r requirements.txt
 ```
 

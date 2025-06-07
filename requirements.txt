@@ -6,7 +6,7 @@ charset-normalizer==3.4.2
 click==8.2.1
 dnspython==2.7.0
 email_validator==2.2.0
--e git+ssh://git@github.com/hn275/evault.git@27a0f2c04f93719bd5ab9d40f79f8464ff57c0e8#egg=evault
+-e git+ssh://git@github.com/hn275/evault.git@05cbd6573ed6944c170b7607f79fbb36cda8d01c#egg=evault
 fastapi==0.115.12
 fastapi-cli==0.0.7
 greenlet==3.2.3
@@ -30,7 +30,6 @@ pycryptodome-test-vectors==1.0.22
 pydantic==2.11.5
 pydantic_core==2.33.2
 Pygments==2.19.1
-pytest==8.4.0
 python-dotenv==1.1.0
 python-multipart==0.0.20
 PyYAML==6.0.2
