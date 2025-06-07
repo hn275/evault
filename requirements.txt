@@ -6,7 +6,6 @@ charset-normalizer==3.4.2
 click==8.2.1
 dnspython==2.7.0
 email_validator==2.2.0
--e git+ssh://git@github.com/hn275/evault.git@05cbd6573ed6944c170b7607f79fbb36cda8d01c#egg=evault
 fastapi==0.115.12
 fastapi-cli==0.0.7
 greenlet==3.2.3
