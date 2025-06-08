@@ -1,7 +1,9 @@
-import json, time, requests, os, math, secrets, threading
+import json, time, requests, os, math, secrets
 from urllib.parse import urlencode
 from typing import Literal, Optional
 import fastapi
+from fastapi.responses import RedirectResponse, PlainTextResponse
+from fastapi.middleware.cors import CORSMiddleware
 from shared.types import GithubAuthToken, GitHubUser
 from shared.utils import env_or_default
 from redis import Redis
@@ -16,6 +18,7 @@ GITHUB_OAUTH_REDIRECT_URI = env_or_default(
 )
 GITHUB_OAUTH_STATE_TTL = 120  # 2 minutes
 EVAULT_SESSION_TOK_EXP = 300  # 5 minutes
+EVAULT_WEB_URL = env_or_default("EVAULT_WEB_URL", "http://localhost:5173")
 REDIS_HOST = env_or_default("REDIS_HOST", "localhost")
 REDIS_PORT_DEFAULT = 6379
 
@@ -23,6 +26,16 @@ redis = Redis(REDIS_HOST, port=REDIS_PORT_DEFAULT)
 redis.ping()
 
 app = fastapi.FastAPI()
+app.add_middleware(
+    # TODO: configure this for prod
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],  # Allows all headers
+)
+
+
 httpclient = HttpClient()
 
 type DeviceType = Literal["web", "cli"]
@@ -35,19 +48,30 @@ oauth_client = GitHubOauth(
 
 
 @app.get("/api/auth")
-async def auth(device_type: DeviceType):
-    login_url: str
-    if device_type == "web":
-        oauth_state = secrets.token_urlsafe(16)
-        redis.set(f"github-oauth-state:{oauth_state}", "", ex=GITHUB_OAUTH_STATE_TTL)
-        login_url = oauth_client.make_web_login_url(oauth_state)
-    else:
-        login_url = oauth_client.make_cli_login_url()
-
+async def auth():
+    oauth_state = secrets.token_urlsafe(32)
+    session_id = secrets.token_urlsafe(16)
+    oauth_login_url = oauth_client.make_web_login_url(oauth_state, session_id)
+    redis.set(
+        f"evault-login-url:{session_id}", oauth_login_url, ex=GITHUB_OAUTH_STATE_TTL
+    )
     return fastapi.Response(
-        content=login_url,
+        content=f"{EVAULT_WEB_URL}/auth?{urlencode({"session_id": session_id})}",
         media_type="text/plain",
     )
+
+
+@app.get("/api/auth/token")
+def auth_token(session_id: str):
+    oauth_login_url = redis.get(f"evault-login-url:{session_id}")
+    if oauth_login_url == None:
+        return PlainTextResponse(
+            status_code=401,
+            content="Login link expired.",
+        )
+    oauth_login_url = oauth_login_url.decode()
+
+    return PlainTextResponse(content=oauth_login_url)
 
 
 @app.get("/api/auth/device")

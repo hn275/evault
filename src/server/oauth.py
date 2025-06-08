@@ -1,4 +1,4 @@
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 
 class GitHubOauth:
@@ -11,10 +11,11 @@ class GitHubOauth:
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
 
-    def make_web_login_url(self, oauth_state: str) -> str:
+    def make_web_login_url(self, oauth_state: str, session_id: str) -> str:
+        redirect_url = f"{self.redirect_uri}?{urlencode({"session_id": session_id})}"
         p = {
             "client_id": self.client_id,
-            "redirect_uri": self.redirect_uri,
+            "redirect_uri": redirect_url,
             "state": oauth_state,
             "scope": "repo:read read:user",
         }

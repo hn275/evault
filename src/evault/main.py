@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import os
 from typing import Optional, Tuple
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse, parse_qs
 import requests, argparse, pathlib
 from repository import parse_remotes
 from shared.types import GithubAuthToken, AuthDataDevice, GitHubUser
@@ -28,12 +28,35 @@ def get_credentials() -> Credentials:
     """
     returns a tuple of (evault-access-token, user-login)
     """
-    r = requests.get(f"{SERVER}/api/auth?device_type=cli")
+    r = requests.get(f"{SERVER}/api/auth")
     assert r.status_code == 200
 
     authURL = r.content.decode()
 
-    r = requests.post(authURL, headers={"Accept": "application/json"})
+    print(
+        f"To authenticate, go to the url "
+        f"https://github.com/login/device and enter the code {authURL}"
+    )
+
+    s = parse_qs(urlparse(authURL).query).get("session_id")
+    assert s != None
+
+    session_id = s[0]
+
+    max_attempts = 10
+    attempt = 0
+    auth_content: Optional[AuthDataDevice] = None
+
+    poll_url = f"{SERVER}/api/token?{urlencode({"session_id": session_id})}"
+    headers = {"Accept": "application/json"}
+
+    while attempt <= max_attempts:
+        attempt += 1
+
+        r = requests.get(
+            poll_url,
+            headers=headers,
+        )
     assert r.status_code == 200
 
     d = r.json()
@@ -43,11 +66,6 @@ def get_credentials() -> Credentials:
         interval=d["interval"],
     )
     user_code = d["user_code"]
-
-    print(
-        f"To authenticate, go to the url "
-        f"https://github.com/login/device and enter the code {user_code}"
-    )
 
     # get user information from server
     r = requests.get(f"{SERVER}/api/auth/device?{urlencode(auth_content.__dict__)}")
