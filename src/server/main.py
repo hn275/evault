@@ -10,7 +10,11 @@ from .httpreqs import HttpClient
 
 GITHUB_OAUTH_CLIENT_ID = os.environ["GITHUB_OAUTH_CLIENT_ID"]
 GITHUB_OAUTH_CLIENT_SECRET = os.environ["GITHUB_OAUTH_CLIENT_SECRET"]
-EVAULT_SESSION_TOK_EXP = 300
+GITHUB_OAUTH_REDIRECT_URI = env_or_default(
+    "GITHUB_OAUTH_REDIRECT_URI", "http://localhost:5173/auth/github"
+)
+GITHUB_OAUTH_STATE_TTL = 120  # 2 minutes
+EVAULT_SESSION_TOK_EXP = 300  # 5 minutes
 REDIS_HOST = env_or_default("REDIS_HOST", "localhost")
 REDIS_PORT_DEFAULT = 6379
 
@@ -26,16 +30,29 @@ type DeviceType = Literal["web", "cli"]
 
 @app.get("/api/auth")
 async def auth(device_type: DeviceType):
+    login_url: str
     if device_type == "web":
-        raise NotImplemented
+        oauth_state = secrets.token_urlsafe(16)
+        redis.set(f"github-oauth-state:{oauth_state}", "", ex=GITHUB_OAUTH_STATE_TTL)
+
+        params = {
+            "client_id": GITHUB_OAUTH_CLIENT_ID,
+            "redirect_uri": GITHUB_OAUTH_REDIRECT_URI,
+            "state": oauth_state,
+            "scope": "repo:read read:user",
+        }
+        login_url = f"https://github.com/login/oauth/authorize?{urlencode(params)}"
+
     else:
         params = {
             "client_id": GITHUB_OAUTH_CLIENT_ID,
         }
-        return fastapi.Response(
-            content=f"https://github.com/login/device/code?{urlencode(params)}",
-            media_type="text/plain",
-        )
+        login_url = f"https://github.com/login/device/code?{urlencode(params)}"
+
+    return fastapi.Response(
+        content=login_url,
+        media_type="text/plain",
+    )
 
 
 @app.get("/api/auth/device")
@@ -55,9 +72,9 @@ async def auth_github(
     headers = {"Accept": "application/json"}
 
     url = f"https://github.com/login/oauth/access_token?{urlencode(p)}"
-    attempt = 0
-    gh_oauth_tok: Optional[GithubAuthToken] = None
 
+    gh_oauth_tok: Optional[GithubAuthToken] = None
+    attempt = 0
     max_attempts = math.ceil(expires_in / interval)
     while attempt <= max_attempts:
         attempt += 1
