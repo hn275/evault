@@ -21,3 +21,4 @@ class GitHubUser:
     name: str
     login: str
     type: str
+    email: str

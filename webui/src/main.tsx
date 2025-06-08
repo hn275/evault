@@ -1,29 +1,16 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { createRoot } from "react-dom/client";
 import Home from "./App";
-import { Auth } from "./pages/auth";
+import { Auth, AuthGithub } from "./pages/auth";
 
 let router = createBrowserRouter([
 	{
 		path: "/",
 		Component: Home,
-		children: [
-			/*
-						{
-							path: "shows/:showId",
-							Component: Show,
-							loader: ({ request, params }) =>
-								fetch(`/api/show/${params.showId}.json`, {
-									signal: request.signal,
-								}),
-						},
-						*/
-		],
+		children: [],
 	},
-	{
-		path: "/auth",
-		Component: Auth,
-	},
+	{ path: "/auth", Component: Auth },
+	{ path: "/auth/github", Component: AuthGithub },
 ]);
 
 createRoot(document.getElementById("root")).render(

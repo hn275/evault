@@ -52,20 +52,21 @@ def get_credentials() -> Credentials:
 
     while attempt <= max_attempts:
         attempt += 1
+        print(f"\tattempt #{attempt}")
 
         r = requests.get(
             poll_url,
             headers=headers,
         )
-    assert r.status_code == 200
+        assert r.status_code == 200
 
-    d = r.json()
-    auth_content = AuthDataDevice(
-        device_code=d["device_code"],
-        expires_in=d["expires_in"],
-        interval=d["interval"],
-    )
-    user_code = d["user_code"]
+        d = r.json()
+        auth_content = AuthDataDevice(
+            device_code=d["device_code"],
+            expires_in=d["expires_in"],
+            interval=d["interval"],
+        )
+        user_code = d["user_code"]
 
     # get user information from server
     r = requests.get(f"{SERVER}/api/auth/device?{urlencode(auth_content.__dict__)}")

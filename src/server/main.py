@@ -1,14 +1,14 @@
-import json, time, requests, os, math, secrets
-from urllib.parse import urlencode
-from typing import Literal, Optional
+import json, os, secrets
+from urllib.parse import urlencode, parse_qs, urlparse
+from typing import Literal
 import fastapi
-from fastapi.responses import RedirectResponse, PlainTextResponse
+from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
-from shared.types import GithubAuthToken, GitHubUser
+from shared.types import GithubAuthToken
 from shared.utils import env_or_default
-from redis import Redis
+from .storage import Redis
 from .httpreqs import HttpClient
-from .oauth import GitHubOauth
+from .oauth import GitHubOauth, GitHubClient
 
 
 GITHUB_OAUTH_CLIENT_ID = os.environ["GITHUB_OAUTH_CLIENT_ID"]
@@ -61,106 +61,64 @@ async def auth():
     )
 
 
-@app.get("/api/auth/token")
-def auth_token(session_id: str):
+@app.get("/api/auth/url")
+def auth_url(session_id: str):
     oauth_login_url = redis.get(f"evault-login-url:{session_id}")
+    if oauth_login_url == None:
+        return PlainTextResponse(status_code=401, content="Login link expired.")
+
+    oauth_login_url = oauth_login_url.decode()
+    redis.expire(f"evault-login-url:{session_id}", GITHUB_OAUTH_STATE_TTL)
+
+    return PlainTextResponse(content=oauth_login_url)
+
+
+@app.get("/api/auth/token")
+def auth_token(session_id: str, code: str, state: str):
+    oauth_login_url = redis.getdel(f"evault-login-url:{session_id}")
     if oauth_login_url == None:
         return PlainTextResponse(
             status_code=401,
             content="Login link expired.",
         )
+
     oauth_login_url = oauth_login_url.decode()
+    params = parse_qs(urlparse(oauth_login_url).query)
 
-    return PlainTextResponse(content=oauth_login_url)
+    # verify state
+    session_state = params.get("state")
+    assert session_state
+    session_state = session_state[0]
+    if session_state != state:
+        return PlainTextResponse(content="Invalid authentication", status_code=401)
 
+    # get access token from github
+    auth_url = oauth_client.make_web_access_tok_url(code)
+    r = httpclient.post(auth_url, headers={"Accept": "application/json; charset=utf-8"})
+    assert r.status_code == 200
 
-@app.get("/api/auth/device")
-async def auth_github(
-    device_code: str,
-    # user_code: str,
-    # verification_uri: str,
-    expires_in: int,
-    interval: int,
-):
-    # poll for access token
-    gh_oauth_tok: Optional[GithubAuthToken] = None
-
-    url = oauth_client.make_cli_poll_url(device_code)
-    headers = {"Accept": "application/json"}
-
-    max_attempts = math.ceil(expires_in / interval)
-    attempt = 0
-    while attempt <= max_attempts:
-        attempt += 1
-
-        req = requests.post(url, headers=headers)
-
-        assert req.status_code == 200
-        data = req.json()
-
-        if "error" in data:
-            if data["error"] == "authorization_pending":
-                time.sleep(interval)
-                continue
-            else:
-                return fastapi.Response(
-                    status_code=403, content=data["error_description"]
-                )
-
-        gh_oauth_tok = GithubAuthToken(
-            access_token=data["access_token"],
-            token_type=data["token_type"],
-            scope=data["scope"],
-        )
-        break
-
-    if gh_oauth_tok == None:
-        return fastapi.Response(
-            status_code=403, content="Request for user's information timed out."
-        )
+    d = r.json()
+    gh_token = GithubAuthToken(d["access_token"], d["token_type"], d["scope"])
 
     # get user information
-    github_user = httpclient.fetch_github_credentials(
-        gh_oauth_tok.token_type, gh_oauth_tok.access_token
-    )
-    if github_user == None:
-        return fastapi.Response(
-            content="Access token expired.", status_code=403, media_type="text/plain"
-        )
+    cx = GitHubClient(gh_token.access_token, gh_token.token_type)
+    gh_user = cx.get_user()
+    if gh_user == None:
+        return PlainTextResponse(content="Failed to fetch user data.", status_code=401)
 
+    # TODO: store user in database?
+    # store a (new) session: github user to cache
     # create an evault access token, then cache it
     evault_access_token = secrets.token_urlsafe(32)
-    key = f"evault-access-token:{evault_access_token}"
-    redis.hset(
-        name=key,
-        mapping={
-            "user-id": github_user.id,
-            "github-access-token": gh_oauth_tok.access_token,
-            "github-access-token-type": gh_oauth_tok.token_type,
-        },
-    )
-    redis.expire(key, EVAULT_SESSION_TOK_EXP)
+    redis.cache_user(evault_access_token, gh_token, gh_user, EVAULT_SESSION_TOK_EXP)
 
-    # build response
-    body = json.dumps(
-        {
-            "user-login": github_user.login,
-            "evault-access-token": evault_access_token,
-        }
-    )
-
-    res = fastapi.Response(content=body, media_type="application/json")
-    res.set_cookie(
+    response = fastapi.Response(status_code=200)
+    response.set_cookie(
         key="evault_access_token",
         value=evault_access_token,
         expires=EVAULT_SESSION_TOK_EXP,
     )
-    res.set_cookie(
-        key="device_type",
-        value="cli",
-        expires=EVAULT_SESSION_TOK_EXP,
-    )
-    return res
+    return response
 
 
 @app.get("/api/auth/check")
