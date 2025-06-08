@@ -1,4 +1,4 @@
-import json, time, requests, os, math, secrets
+import json, time, requests, os, math, secrets, threading
 from urllib.parse import urlencode
 from typing import Literal, Optional
 import fastapi
@@ -6,6 +6,7 @@ from shared.types import GithubAuthToken, GitHubUser
 from shared.utils import env_or_default
 from redis import Redis
 from .httpreqs import HttpClient
+from .oauth import GitHubOauth
 
 
 GITHUB_OAUTH_CLIENT_ID = os.environ["GITHUB_OAUTH_CLIENT_ID"]
@@ -18,7 +19,6 @@ EVAULT_SESSION_TOK_EXP = 300  # 5 minutes
 REDIS_HOST = env_or_default("REDIS_HOST", "localhost")
 REDIS_PORT_DEFAULT = 6379
 
-
 redis = Redis(REDIS_HOST, port=REDIS_PORT_DEFAULT)
 redis.ping()
 
@@ -27,6 +27,12 @@ httpclient = HttpClient()
 
 type DeviceType = Literal["web", "cli"]
 
+oauth_client = GitHubOauth(
+    client_id=GITHUB_OAUTH_CLIENT_ID,
+    client_secret=GITHUB_OAUTH_CLIENT_SECRET,
+    redirect_uri=GITHUB_OAUTH_REDIRECT_URI,
+)
+
 
 @app.get("/api/auth")
 async def auth(device_type: DeviceType):
@@ -34,20 +40,9 @@ async def auth(device_type: DeviceType):
     if device_type == "web":
         oauth_state = secrets.token_urlsafe(16)
         redis.set(f"github-oauth-state:{oauth_state}", "", ex=GITHUB_OAUTH_STATE_TTL)
-
-        params = {
-            "client_id": GITHUB_OAUTH_CLIENT_ID,
-            "redirect_uri": GITHUB_OAUTH_REDIRECT_URI,
-            "state": oauth_state,
-            "scope": "repo:read read:user",
-        }
-        login_url = f"https://github.com/login/oauth/authorize?{urlencode(params)}"
-
+        login_url = oauth_client.make_web_login_url(oauth_state)
     else:
-        params = {
-            "client_id": GITHUB_OAUTH_CLIENT_ID,
-        }
-        login_url = f"https://github.com/login/device/code?{urlencode(params)}"
+        login_url = oauth_client.make_cli_login_url()
 
     return fastapi.Response(
         content=login_url,
@@ -64,18 +59,13 @@ async def auth_github(
     interval: int,
 ):
     # poll for access token
-    p = {
-        "client_id": GITHUB_OAUTH_CLIENT_ID,
-        "device_code": device_code,
-        "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-    }
+    gh_oauth_tok: Optional[GithubAuthToken] = None
+
+    url = oauth_client.make_cli_poll_url(device_code)
     headers = {"Accept": "application/json"}
 
-    url = f"https://github.com/login/oauth/access_token?{urlencode(p)}"
-
-    gh_oauth_tok: Optional[GithubAuthToken] = None
-    attempt = 0
     max_attempts = math.ceil(expires_in / interval)
+    attempt = 0
     while attempt <= max_attempts:
         attempt += 1
 
