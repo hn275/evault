@@ -27,10 +27,12 @@ class GitHubUser:
     login: str
     type: str
     email: str
+    avatar_url: str
 
 
 class RequestCookieBase(BaseModel):
     evault_access_token: str
 
 
-type Cookie = Annotated[RequestCookieBase, fastapi.Cookie()]
+# type Cookie = Annotated[RequestCookieBase, fastapi.Cookie()]
+type Cookie = Annotated[str, fastapi.Cookie()]

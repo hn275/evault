@@ -7,6 +7,9 @@ class HttpClient(requests.Session):
     def __init__(self) -> None:
         super().__init__()
 
+    def fetch_user_repositories(self, token_type: str, access_token: str):
+        url = f"https://api.github.com/user/repos"
+
     def fetch_github_credentials(
         self, token_type: str, access_token: str
     ) -> Optional[GitHubUser]:
@@ -18,7 +21,7 @@ class HttpClient(requests.Session):
             "Accept": "application/json",
         }
 
-        req = requests.get(url, headers=headers)
+        req = self.get(url, headers=headers)
         if req.status_code != 200:
             return None
 
@@ -28,4 +31,6 @@ class HttpClient(requests.Session):
             login=data["login"],
             name=data["name"],
             type=data["type"],
+            email=data["email"],
+            avatar_url=data["avatar_url"],
         )

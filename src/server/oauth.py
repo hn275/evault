@@ -4,33 +4,6 @@ from shared.types import DeviceType, GitHubUser, GithubAuthToken
 from typing import Optional
 
 
-class GitHubClient(Session):
-    access_token: str
-    token_type: str
-
-    def __init__(self, access_token: str, token_type: str) -> None:
-        super().__init__()
-        self.access_token = access_token
-        self.token_type = token_type
-
-    def get_user(self) -> Optional[GitHubUser]:
-        headers = {
-            "Authorization": f"{self.token_type} {self.access_token}",
-            "Accept": "application/json; charset=utf-8",
-        }
-        r = self.get("https://api.github.com/user", headers=headers)
-        assert r.status_code == 200
-        d = r.json()
-
-        return GitHubUser(
-            id=d["id"],
-            name=d["name"],
-            login=d["login"],
-            type=d["type"],
-            email=d["email"],
-        )
-
-
 class GitHubOauth:
     client_id: str
     client_secret: str
@@ -41,7 +14,7 @@ class GitHubOauth:
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
 
-    def make_web_login_url(
+    def make_login_url(
         self, oauth_state: str, session_id: str, device_type: DeviceType
     ) -> str:
         p = {
@@ -54,7 +27,7 @@ class GitHubOauth:
             "client_id": self.client_id,
             "redirect_uri": redirect_url,
             "state": oauth_state,
-            "scope": "repo:read read:user",
+            "scope": "repo read:user",
         }
         return f"https://github.com/login/oauth/authorize?{urlencode(p)}"
 
