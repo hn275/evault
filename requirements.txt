@@ -25,6 +25,8 @@ marshmallow==3.26.1
 mdurl==0.1.2
 mypy_extensions==1.1.0
 packaging==25.0
+pathspec==0.12.1
+platformdirs==4.3.8
 pluggy==1.6.0
 psycopg2==2.9.10
 pycryptodome==3.23.0
