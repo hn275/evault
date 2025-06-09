@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from pydantic import BaseModel
+from typing import Annotated
+import fastapi
 
 
 @dataclass
@@ -22,3 +25,10 @@ class GitHubUser:
     login: str
     type: str
     email: str
+
+
+class RequestCookieBase(BaseModel):
+    evault_access_token: str
+
+
+type Cookie = Annotated[RequestCookieBase, fastapi.Cookie()]
