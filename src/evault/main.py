@@ -25,18 +25,12 @@ class Credentials:
 
 
 def get_credentials() -> Credentials:
-    """
-    returns a tuple of (evault-access-token, user-login)
-    """
-    r = requests.get(f"{SERVER}/api/auth")
+    r = requests.get(f"{SERVER}/api/auth?device_type=cli")
     assert r.status_code == 200
 
     authURL = r.content.decode()
 
-    print(
-        f"To authenticate, go to the url "
-        f"https://github.com/login/device and enter the code {authURL}"
-    )
+    print(f"To authenticate, go to {authURL}")
 
     s = parse_qs(urlparse(authURL).query).get("session_id")
     assert s != None
@@ -83,9 +77,6 @@ def get_credentials() -> Credentials:
 def check_credentials(
     credentials_path: pathlib.Path,
 ) -> Optional[Credentials]:
-    """
-    returns the evault-access-token if it's not expired, None otherwise
-    """
     print("Checking credentials...")
     try:
         with open(credentials_path, "r") as file:

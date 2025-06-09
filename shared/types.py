@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from pydantic import BaseModel
-from typing import Annotated
+from typing import Annotated, Literal
 import fastapi
+
+type DeviceType = Literal["web", "cli"]
 
 
 @dataclass

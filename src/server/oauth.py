@@ -1,6 +1,6 @@
 from urllib.parse import urlencode, urlparse
 from requests import Session
-from shared.types import GitHubUser, GithubAuthToken
+from shared.types import DeviceType, GitHubUser, GithubAuthToken
 from typing import Optional
 
 
@@ -41,8 +41,15 @@ class GitHubOauth:
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
 
-    def make_web_login_url(self, oauth_state: str, session_id: str) -> str:
-        redirect_url = f"{self.redirect_uri}?{urlencode({"session_id": session_id})}"
+    def make_web_login_url(
+        self, oauth_state: str, session_id: str, device_type: DeviceType
+    ) -> str:
+        p = {
+            "session_id": session_id,
+            "device_type": device_type,
+        }
+        redirect_url = f"{self.redirect_uri}?{urlencode(p)}"
+
         p = {
             "client_id": self.client_id,
             "redirect_uri": redirect_url,

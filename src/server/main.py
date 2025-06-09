@@ -4,7 +4,7 @@ from typing import Literal
 import fastapi
 from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
-from shared.types import GithubAuthToken
+from shared.types import Cookie, GithubAuthToken, DeviceType
 from shared.utils import env_or_default
 from .storage import Redis
 from .httpreqs import HttpClient
@@ -38,7 +38,6 @@ app.add_middleware(
 
 httpclient = HttpClient()
 
-type DeviceType = Literal["web", "cli"]
 
 oauth_client = GitHubOauth(
     client_id=GITHUB_OAUTH_CLIENT_ID,
@@ -48,10 +47,12 @@ oauth_client = GitHubOauth(
 
 
 @app.get("/api/auth")
-async def auth():
+async def auth(device_type: DeviceType):
     oauth_state = secrets.token_urlsafe(32)
     session_id = secrets.token_urlsafe(16)
-    oauth_login_url = oauth_client.make_web_login_url(oauth_state, session_id)
+    oauth_login_url = oauth_client.make_web_login_url(
+        oauth_state, session_id, device_type
+    )
     redis.set(
         f"evault-login-url:{session_id}", oauth_login_url, ex=GITHUB_OAUTH_STATE_TTL
     )
@@ -74,7 +75,7 @@ def auth_url(session_id: str):
 
 
 @app.get("/api/auth/token")
-def auth_token(session_id: str, code: str, state: str):
+def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     oauth_login_url = redis.getdel(f"evault-login-url:{session_id}")
     if oauth_login_url == None:
         return PlainTextResponse(
@@ -119,48 +120,3 @@ def auth_token(session_id: str, code: str, state: str):
         expires=EVAULT_SESSION_TOK_EXP,
     )
     return response
-
-
-@app.get("/api/auth/check")
-def auth_check(token: str, device_type: DeviceType):
-    key = f"evault-access-token:{token}"
-    tok = redis.hgetall(key)
-    print(tok)
-
-    if tok == {}:  # instead of reporting a not found, it returns `{}`
-        return fastapi.Response(
-            content="Access token expired.", status_code=403, media_type="text/plain"
-        )
-
-    access_token = tok.get(b"github-access-token").decode()
-    token_type = tok.get(b"github-access-token-type").decode()
-
-    # get user information
-    github_user = httpclient.fetch_github_credentials(token_type, access_token)
-    if github_user == None:
-        return fastapi.Response(
-            content="Access token expired.", status_code=403, media_type="text/plain"
-        )
-
-    body = json.dumps(
-        {
-            "user-login": github_user.login,
-            "evault-access-token": token,
-        }
-    )
-
-    res = fastapi.Response(content=body, media_type="application/json")
-    res.set_cookie(
-        key="evault_access_token",
-        value=key,
-        expires=EVAULT_SESSION_TOK_EXP,
-    )
-    res.set_cookie(
-        key="device_type",
-        value=device_type,
-        expires=EVAULT_SESSION_TOK_EXP,
-    )
-
-    # extend session
-    redis.expire(key, EVAULT_SESSION_TOK_EXP)
-    return res
