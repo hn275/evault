@@ -1,4 +1,4 @@
-import json, os, secrets
+import json, os, secrets, dotenv
 from urllib.parse import urlencode, parse_qs, urlparse
 import fastapi
 from fastapi.responses import PlainTextResponse, JSONResponse
@@ -9,6 +9,7 @@ from .storage import Redis
 from .httpreqs import HttpClient
 from .oauth import GitHubOauth, GitHubClient
 
+dotenv.load_dotenv()
 
 GITHUB_OAUTH_CLIENT_ID = os.environ["GITHUB_OAUTH_CLIENT_ID"]
 GITHUB_OAUTH_CLIENT_SECRET = os.environ["GITHUB_OAUTH_CLIENT_SECRET"]
