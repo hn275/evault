@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import os
+import time, json
 from typing import Optional, Tuple
 from urllib.parse import urlencode, urlparse, parse_qs
 import requests, argparse, pathlib
@@ -18,14 +18,8 @@ parser.add_argument("command", choices=ALLOW_COMMANDS)
 session = requests.Session()
 
 
-@dataclass
-class Credentials:
-    evault_access_tok: str
-    user_login: str
-
-
-def get_credentials() -> Credentials:
-    r = requests.get(f"{SERVER}/api/auth?device_type=cli")
+def get_access_token() -> Optional[str]:
+    r = session.get(f"{SERVER}/api/auth?device_type=cli")
     assert r.status_code == 200
 
     authURL = r.content.decode()
@@ -39,45 +33,38 @@ def get_credentials() -> Credentials:
 
     max_attempts = 10
     attempt = 0
-    auth_content: Optional[AuthDataDevice] = None
 
-    poll_url = f"{SERVER}/api/token?{urlencode({"session_id": session_id})}"
-    headers = {"Accept": "application/json"}
+    poll_url = f"{SERVER}/api/auth/poll?{urlencode({"session_id": session_id})}"
 
     while attempt <= max_attempts:
         attempt += 1
-        print(f"\tattempt #{attempt}")
 
-        r = requests.get(
-            poll_url,
-            headers=headers,
-        )
+        r = session.get(poll_url)
+        if r.status_code == 403:
+            print("Authentication request timed out.")
+            exit(1)
+
         assert r.status_code == 200
+        d = json.loads(r.json())
 
-        d = r.json()
-        auth_content = AuthDataDevice(
-            device_code=d["device_code"],
-            expires_in=d["expires_in"],
-            interval=d["interval"],
-        )
-        user_code = d["user_code"]
+        if d.get("status") == "pending":
+            time.sleep(5)
+            continue
 
-    # get user information from server
-    r = requests.get(f"{SERVER}/api/auth/device?{urlencode(auth_content.__dict__)}")
-    assert r.status_code == 200
+        assert d["status"] == "ok"
+        access_token = d.get("access_token")
 
-    print("\tSuccess! Access token issued.")
+        assert access_token != None
+        return access_token
 
-    d = r.json()
-    return Credentials(
-        evault_access_tok=d["evault-access-token"], user_login=d["user-login"]
-    )
+    return None
 
 
 def check_credentials(
     credentials_path: pathlib.Path,
-) -> Optional[Credentials]:
+) -> Optional[str]:
     print("Checking credentials...")
+    return None
     try:
         with open(credentials_path, "r") as file:
             token = file.read()
@@ -109,16 +96,15 @@ if __name__ == "__main__":
     cmd = args.command.lower()
 
     # Authentication
-    credentials = check_credentials(CREDENTIALS_PATH)
-    if credentials == None:
+    access_token = check_credentials(CREDENTIALS_PATH)
+    if access_token == None:
         print("Authenticating...")
-        credentials = get_credentials()
+        access_token = get_access_token()
+        print("\tSuccess! Access token issued.")
         with open(CREDENTIALS_PATH, "w") as f:
-            f.write(credentials.evault_access_tok)
+            f.write(access_token)
 
-    token, user_login = credentials.evault_access_tok, credentials.user_login
-    print(f"\tUser authenticated: {user_login}")
-    print()
+    print(f"\tAuthentication success")
 
     try:
         repos = parse_remotes()

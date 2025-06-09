@@ -1,3 +1,4 @@
+from typing import Optional
 import redis as redispy
 from shared.types import GithubAuthToken, GitHubUser
 
@@ -36,3 +37,14 @@ class Redis(redispy.Redis):
             },
         )
         self.expire(key, ttl)
+
+    def cache_token_poll(self, session_id: str, evault_access_token: str, ttl: int):
+        key = f"evault-token-poll:{session_id}"
+        self.set(name=key, value=evault_access_token, ex=ttl)
+
+    def get_token_poll(self, session_id: str) -> Optional[str]:
+        t = self.getdel(f"evault-token-poll:{session_id}")
+        if t:
+            return t.decode()
+
+        return None
