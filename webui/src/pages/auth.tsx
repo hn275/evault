@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useSearchParams, redirect } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useSearchParams, redirect, useNavigate } from 'react-router-dom';
 // path /auth
 export function Auth() {
   useAuth();
@@ -22,12 +22,19 @@ function useAuth() {
 }
 
 export function AuthGithub() {
-  useAuthGithub();
-  return <>Authenticating...</>;
+  const f = useAuthGithub();
+  return f.loading ? (
+    <>Authenticating...</>
+  ) : (
+    <>Authenticated, you can now close this window.</>
+  );
 }
 
 function useAuthGithub() {
   const [param] = useSearchParams();
+  const nav = useNavigate();
+  const [loading, setLoading] = useState<boolean>(true);
+
   useEffect(() => {
     const sessionId = param.get('session_id');
     const oauthCode = param.get('code');
@@ -45,8 +52,21 @@ function useAuthGithub() {
         state: oauthState,
         device_type: deviceType,
       });
-      const r = await fetch(`/api/auth/token?${p.toString()}`);
-      console.log(r.status);
+
+      try {
+        const r = await fetch(`/api/auth/token?${p.toString()}`);
+        console.log(r.status);
+
+        if (deviceType === 'web') {
+          nav('/dash');
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
+
+  return { loading };
 }

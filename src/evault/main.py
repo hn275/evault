@@ -7,7 +7,7 @@ from repository import parse_remotes
 from shared.types import GithubAuthToken, AuthDataDevice, GitHubUser
 
 
-CREDENTIALS_PATH = pathlib.Path("/tmp/evault/evault-access-token")
+CREDENTIALS_PATH = pathlib.Path("/tmp/evault-access-token")  # TODO: change this path
 SERVER = "http://127.0.0.1:8000"
 
 # ARG PARSER
