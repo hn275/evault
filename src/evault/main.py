@@ -41,8 +41,7 @@ def get_access_token() -> Optional[str]:
 
         r = session.get(poll_url)
         if r.status_code == 403:
-            print("Authentication request timed out.")
-            exit(1)
+            break
 
         assert r.status_code == 200
         d = json.loads(r.json())
@@ -64,14 +63,14 @@ def check_credentials(
     credentials_path: pathlib.Path,
 ) -> Optional[str]:
     print("Checking credentials...")
-    return None
     try:
         with open(credentials_path, "r") as file:
             token = file.read()
             print("\tExisting credentials found, revalidating token...")
-            r = session.get(
-                f"{SERVER}/api/auth/check?{urlencode({'token': token, 'device_type': 'cli'})}"
-            )
+
+            p = {"access_token": token, "device_type": "cli"}
+            url = f"{SERVER}/api/auth/refresh?{urlencode(p)}"
+            r = session.get(url)
 
             if r.status_code == 403:
                 print("\r\tSession expired.")
@@ -80,11 +79,8 @@ def check_credentials(
             elif r.status_code != 200:
                 raise Exception(f"Server error: {r.status_code}")
 
-            d = r.json()
             print("\r\tSuccess! Token refreshed")
-            return Credentials(
-                evault_access_tok=d["evault-access-token"], user_login=d["user-login"]
-            )
+            return token
 
     except FileNotFoundError as e:
         print("\r\tToken not found / Not authenticated.")
@@ -99,7 +95,12 @@ if __name__ == "__main__":
     access_token = check_credentials(CREDENTIALS_PATH)
     if access_token == None:
         print("Authenticating...")
+
         access_token = get_access_token()
+        if access_token == None:
+            print("Authentication request timed out.")
+            exit(1)
+
         print("\tSuccess! Access token issued.")
         with open(CREDENTIALS_PATH, "w") as f:
             f.write(access_token)

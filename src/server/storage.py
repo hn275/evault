@@ -15,7 +15,7 @@ class Redis(redispy.Redis):
     def __init__(self, host: str, port: int) -> None:
         super().__init__(host, port)
 
-    def cache_user(
+    def create_user_session(
         self,
         evault_access_token: str,
         gh_token: GithubAuthToken,
@@ -37,6 +37,15 @@ class Redis(redispy.Redis):
             },
         )
         self.expire(key, ttl)
+
+    def renew_user_session(self, evault_access_token: str, ttl: int) -> bool:
+        key = f"evault-access-token:{evault_access_token}"
+        ctr = self.exists(key)
+        if ctr == 0:
+            return False
+
+        self.expire(key, ttl)
+        return True
 
     def cache_token_poll(self, session_id: str, evault_access_token: str, ttl: int):
         key = f"evault-token-poll:{session_id}"

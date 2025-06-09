@@ -1,10 +1,9 @@
 import json, os, secrets
 from urllib.parse import urlencode, parse_qs, urlparse
-from typing import Literal
 import fastapi
 from fastapi.responses import PlainTextResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from shared.types import Cookie, GithubAuthToken, DeviceType
+from shared.types import GithubAuthToken, DeviceType
 from shared.utils import env_or_default
 from .storage import Redis
 from .httpreqs import HttpClient
@@ -18,7 +17,7 @@ GITHUB_OAUTH_REDIRECT_URI = env_or_default(
 )
 GITHUB_OAUTH_STATE_TTL = 120  # 2 minutes
 
-EVAULT_SESSION_TOK_EXP = 300  # 5 minutes
+EVAULT_SESSION_TOKEN_TTL = 300  # 5 minutes
 EVAULT_WEB_URL = env_or_default("EVAULT_WEB_URL", "http://localhost:5173")
 EVAULT_TOKEN_POLL_TTL = 30
 EVAULT_TOKEN_POLL_MAX_ATTEMPT = 10
@@ -115,14 +114,16 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     # store a (new) session: github user to cache
     # create an evault access token, then cache it
     evault_access_token = secrets.token_urlsafe(32)
-    redis.cache_user(evault_access_token, gh_token, gh_user, EVAULT_SESSION_TOK_EXP)
+    redis.create_user_session(
+        evault_access_token, gh_token, gh_user, EVAULT_SESSION_TOKEN_TTL
+    )
 
     response = fastapi.Response(status_code=200)
     if device_type == "web":
         response.set_cookie(
             key="evault_access_token",
             value=evault_access_token,
-            expires=EVAULT_SESSION_TOK_EXP,
+            expires=EVAULT_SESSION_TOKEN_TTL,
         )
     else:
         redis.cache_token_poll(session_id, evault_access_token, EVAULT_TOKEN_POLL_TTL)
@@ -155,4 +156,29 @@ async def auth_poll(session_id: str, req: fastapi.Request):
             content=json.dumps({"status": "pending"}),
         )
         response.set_cookie("evault_poll_attempt", f"{attempt + 1}")
+        return response
+
+
+@app.get("/api/auth/refresh")
+def auth_refresh(access_token: str, device_type: DeviceType, request: fastapi.Request):
+    """
+    for device_type=web, the access_token should be an empty string
+    """
+    renewed = redis.renew_user_session(access_token, EVAULT_SESSION_TOKEN_TTL)
+    if not renewed:
+        return PlainTextResponse(status_code=403, content="Session expired.")
+
+    if device_type == "cli":
+        return fastapi.Response(status_code=200)
+
+    else:
+        evault_access_token = request.cookies.get("evault_access_token")
+        assert evault_access_token
+
+        response = fastapi.Response(status_code=200)
+        response.set_cookie(
+            key="evault_access_token",
+            value=evault_access_token,
+            expires=EVAULT_SESSION_TOKEN_TTL,
+        )
         return response
