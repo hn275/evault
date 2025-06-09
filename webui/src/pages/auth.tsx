@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams, redirect, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useSearchParams, redirect, useNavigate } from "react-router-dom";
 // path /auth
 export function Auth() {
   useAuth();
@@ -10,7 +10,7 @@ export function Auth() {
 function useAuth() {
   const [param] = useSearchParams();
   useEffect(() => {
-    const sessionId = param.get('session_id');
+    const sessionId = param.get("session_id");
     (async () => {
       const r = await fetch(
         // TODO: change the API url, pull from env
@@ -21,10 +21,13 @@ function useAuth() {
   }, []);
 }
 
+// path /auth/github
 export function AuthGithub() {
   const f = useAuthGithub();
   return f.loading ? (
     <>Authenticating...</>
+  ) : f.error !== null ? (
+    <> {f.error}</>
   ) : (
     <>Authenticated, you can now close this window.</>
   );
@@ -34,15 +37,16 @@ function useAuthGithub() {
   const [param] = useSearchParams();
   const nav = useNavigate();
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const sessionId = param.get('session_id');
-    const oauthCode = param.get('code');
-    const oauthState = param.get('state');
-    const deviceType = param.get('device_type');
+    const sessionId = param.get("session_id");
+    const oauthCode = param.get("code");
+    const oauthState = param.get("state");
+    const deviceType = param.get("device_type");
 
     if (!sessionId || !oauthCode || !oauthState || !deviceType) {
-      throw new Error('Invalid params.');
+      throw new Error("Invalid params.");
     }
 
     (async () => {
@@ -57,10 +61,11 @@ function useAuthGithub() {
         const r = await fetch(`/api/auth/token?${p.toString()}`);
         console.log(r.status);
 
-        if (deviceType === 'web') {
-          nav('/dash');
+        if (deviceType === "web") {
+          nav("/dash");
         }
       } catch (e) {
+        setError("Something went wrong.");
         console.error(e);
       } finally {
         setLoading(false);
@@ -68,5 +73,5 @@ function useAuthGithub() {
     })();
   }, []);
 
-  return { loading };
+  return { loading, error };
 }
