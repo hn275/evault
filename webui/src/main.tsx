@@ -12,7 +12,7 @@ let router = createBrowserRouter([
   },
   { path: "/auth", Component: Auth },
   { path: "/auth/github", Component: AuthGithub },
-  { path: "/dash", Component: Dash },
+  { path: "/dashboard", Component: Dash },
 ]);
 
 createRoot(document.getElementById("root")).render(

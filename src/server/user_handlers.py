@@ -1,3 +1,4 @@
+from dataclasses import asdict
 import json
 from .config import *
 from shared.types import Cookie
@@ -5,6 +6,7 @@ from typing import Optional
 from fastapi.routing import APIRouter
 from fastapi import Depends, HTTPException, Cookie
 from fastapi.responses import JSONResponse
+from fastapi import Response
 
 
 def auth_middleware(evault_access_token: Optional[str] = Cookie(None)) -> str:
@@ -33,7 +35,12 @@ def get_user_repositories(evault_access_token: str = Depends(auth_middleware)):
     d = redis.get_user_session(evault_access_token)
     assert d != None
     (_, token) = d
-    pass
+    repos = httpclient.fetch_user_repositories(token.token_type, token.access_token)
+    return Response(
+        status_code=200,
+        media_type="application/json; charset=utf-8",
+        content=json.dumps([asdict(repo) for repo in repos]),
+    )
 
 
 app.include_router(dashboard_router)

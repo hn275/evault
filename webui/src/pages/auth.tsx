@@ -59,10 +59,9 @@ function useAuthGithub() {
 
       try {
         const r = await fetch(`/api/auth/token?${p.toString()}`);
-        console.log(r.status);
 
         if (deviceType === "web") {
-          nav("/dash");
+          nav("/dashboard");
         }
       } catch (e) {
         setError("Something went wrong.");
