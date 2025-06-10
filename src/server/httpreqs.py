@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import json, dacite
 from typing import List, Optional
 import requests
-from shared.types import GitHubUser
+from ..pkg.types import GitHubUser
 
 
 @dataclass

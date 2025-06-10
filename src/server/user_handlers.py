@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from .config import *
-from shared.types import Cookie
+from ..pkg.types import Cookie
 from typing import Optional
 from fastapi.routing import APIRouter
 from fastapi import Depends, HTTPException, Cookie

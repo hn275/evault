@@ -1,5 +1,5 @@
 import dotenv, os
-from shared.utils import env_or_default
+from ..pkg.utils import env_or_default
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from .storage import Redis, Database
