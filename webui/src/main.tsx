@@ -1,5 +1,11 @@
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
+import "@fontsource/roboto/300.css";
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
 
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
@@ -14,9 +20,19 @@ declare module "@tanstack/react-router" {
   }
 }
 
-// Render the app
+const theme = createTheme({
+  palette: {
+    mode: "light",
+  },
+});
+
 const rootElement = document.getElementById("root")!;
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
-  root.render(<RouterProvider router={router} />);
+  root.render(
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <RouterProvider router={router} />
+    </ThemeProvider>,
+  );
 }

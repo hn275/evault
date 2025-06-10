@@ -1,3 +1,4 @@
+import { Button } from "@mui/material";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
@@ -9,7 +10,9 @@ function App() {
 
   return (
     <>
-      <button onClick={h.signInRedirect}>Sign In with GitHub</button>
+      <Button variant="contained" onClick={h.signInRedirect}>
+        Sign In with GitHub
+      </Button>
     </>
   );
 }
