@@ -15,6 +15,7 @@ import { Route as IndexImport } from './routes/index'
 import { Route as DashboardIndexImport } from './routes/dashboard/index'
 import { Route as AuthIndexImport } from './routes/auth/index'
 import { Route as AuthGithubImport } from './routes/auth/github'
+import { Route as DashboardRepositoryRepoIDImport } from './routes/dashboard/repository/$repoID'
 
 // Create/Update Routes
 
@@ -39,6 +40,12 @@ const AuthIndexRoute = AuthIndexImport.update({
 const AuthGithubRoute = AuthGithubImport.update({
   id: '/auth/github',
   path: '/auth/github',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DashboardRepositoryRepoIDRoute = DashboardRepositoryRepoIDImport.update({
+  id: '/dashboard/repository/$repoID',
+  path: '/dashboard/repository/$repoID',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -74,6 +81,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexImport
       parentRoute: typeof rootRoute
     }
+    '/dashboard/repository/$repoID': {
+      id: '/dashboard/repository/$repoID'
+      path: '/dashboard/repository/$repoID'
+      fullPath: '/dashboard/repository/$repoID'
+      preLoaderRoute: typeof DashboardRepositoryRepoIDImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -84,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/auth/github': typeof AuthGithubRoute
   '/auth': typeof AuthIndexRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/repository/$repoID': typeof DashboardRepositoryRepoIDRoute
 }
 
 export interface FileRoutesByTo {
@@ -91,6 +106,7 @@ export interface FileRoutesByTo {
   '/auth/github': typeof AuthGithubRoute
   '/auth': typeof AuthIndexRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/repository/$repoID': typeof DashboardRepositoryRepoIDRoute
 }
 
 export interface FileRoutesById {
@@ -99,14 +115,31 @@ export interface FileRoutesById {
   '/auth/github': typeof AuthGithubRoute
   '/auth/': typeof AuthIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/repository/$repoID': typeof DashboardRepositoryRepoIDRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth/github' | '/auth' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/auth/github'
+    | '/auth'
+    | '/dashboard'
+    | '/dashboard/repository/$repoID'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/github' | '/auth' | '/dashboard'
-  id: '__root__' | '/' | '/auth/github' | '/auth/' | '/dashboard/'
+  to:
+    | '/'
+    | '/auth/github'
+    | '/auth'
+    | '/dashboard'
+    | '/dashboard/repository/$repoID'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth/github'
+    | '/auth/'
+    | '/dashboard/'
+    | '/dashboard/repository/$repoID'
   fileRoutesById: FileRoutesById
 }
 
@@ -115,6 +148,7 @@ export interface RootRouteChildren {
   AuthGithubRoute: typeof AuthGithubRoute
   AuthIndexRoute: typeof AuthIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardRepositoryRepoIDRoute: typeof DashboardRepositoryRepoIDRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -122,6 +156,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthGithubRoute: AuthGithubRoute,
   AuthIndexRoute: AuthIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardRepositoryRepoIDRoute: DashboardRepositoryRepoIDRoute,
 }
 
 export const routeTree = rootRoute
@@ -137,7 +172,8 @@ export const routeTree = rootRoute
         "/",
         "/auth/github",
         "/auth/",
-        "/dashboard/"
+        "/dashboard/",
+        "/dashboard/repository/$repoID"
       ]
     },
     "/": {
@@ -151,6 +187,9 @@ export const routeTree = rootRoute
     },
     "/dashboard/": {
       "filePath": "dashboard/index.tsx"
+    },
+    "/dashboard/repository/$repoID": {
+      "filePath": "dashboard/repository/$repoID.tsx"
     }
   }
 }
