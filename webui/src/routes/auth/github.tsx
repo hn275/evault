@@ -74,7 +74,7 @@ function useAuthGithub() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [nav, param]);
 
   return { loading, error };
 }
