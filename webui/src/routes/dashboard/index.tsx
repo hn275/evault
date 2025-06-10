@@ -71,7 +71,7 @@ function useUser() {
       const d = (await r.json()) as User;
       setUser(d);
     })();
-  }, []);
+  }, [nav]);
 
   return { user };
 }
@@ -102,7 +102,7 @@ function useRepository() {
       const data = await r.json();
       setRepos(data);
     })();
-  }, []);
+  }, [nav]);
 
   return {
     repos,
