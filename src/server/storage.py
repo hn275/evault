@@ -1,6 +1,7 @@
 from typing import Optional, Tuple
 import redis as redispy
 from shared.types import GithubAuthToken, GitHubUser
+from fastapi import HTTPException
 
 
 class Database:
@@ -63,14 +64,13 @@ class Redis(redispy.Redis):
 
         return (gh_user, gh_token)
 
-    def renew_user_session(self, evault_access_token: str, ttl: int) -> bool:
+    def renew_user_session(self, evault_access_token: str, ttl: int):
         key = self._make_session_key(evault_access_token)
         ctr = self.exists(key)
         if ctr == 0:
-            return False
+            raise HTTPException(status_code=403, detail="Session expired.")
 
         self.expire(key, ttl)
-        return True
 
     def cache_token_poll(self, session_id: str, evault_access_token: str, ttl: int):
         key = f"evault-token-poll:{session_id}"

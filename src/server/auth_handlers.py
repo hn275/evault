@@ -118,9 +118,7 @@ def auth_refresh(access_token: str, device_type: DeviceType, request: fastapi.Re
     """
     for device_type=web, the access_token should be an empty string
     """
-    renewed = redis.renew_user_session(access_token, EVAULT_SESSION_TOKEN_TTL)
-    if not renewed:
-        return PlainTextResponse(status_code=403, content="Session expired.")
+    redis.renew_user_session(access_token, EVAULT_SESSION_TOKEN_TTL)
 
     if device_type == "cli":
         return fastapi.Response(status_code=200)
