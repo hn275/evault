@@ -52,4 +52,13 @@ def get_user_repositories(evault_access_token: str = Depends(auth_middleware)):
     )
 
 
+@dashboard_router.get("/repository/{repo_id}")
+def get_repository(repo_id: int):
+    repo = db.get_repository(repo_id)
+    if repo == None:
+        raise HTTPException(status_code=404)
+
+    return "OK"
+
+
 app.include_router(dashboard_router)

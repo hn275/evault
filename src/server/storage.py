@@ -1,20 +1,44 @@
-from typing import Optional, Tuple
+import os
+from typing import Literal, Optional, Tuple
 import redis as redispy
 from shared.types import GithubAuthToken, GitHubUser
 from fastapi import HTTPException
+import sqlalchemy as sql
+from sqlalchemy.orm import Session
+from .models import Repository
+
+from shared.utils import env_or_default
+
+type SSLMode = Literal["require", "disable"]
 
 
 class Database:
-    def __init__(self) -> None:
-        pass
+    engine: sql.Engine
 
-    def save_credentials(self, access_token: str):
-        pass
+    def __init__(
+        self,
+        user: str,
+        password: str,
+        host: str,
+        db: str,
+        port: int = 5432,
+        ssl: SSLMode = "require",
+    ) -> None:
+        conn_str = f"postgresql://{user}:{password}@{host}:{port}/{db}?sslmode={ssl}"
+        self.engine = sql.create_engine(conn_str, echo=True)
+        print(f"Connected to database")
+
+    def get_repository(self, repo_id: int) -> Optional[Repository]:
+        with Session(self.engine) as s:
+            stm = sql.select(Repository).where(Repository.id == repo_id)
+            return s.scalar(stm)
 
 
 class Redis(redispy.Redis):
     def __init__(self, host: str, port: int) -> None:
         super().__init__(host, port)
+        self.ping()
+        print(f"Connected to redis")
 
     def create_user_session(
         self,

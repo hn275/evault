@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/dashboard/")({
@@ -35,6 +35,12 @@ function RouteComponent() {
                     <div>
                       Description: {repo.description ?? "No description"}
                     </div>
+                    <Link
+                      to="/dashboard/repository/$repoID"
+                      params={{ repoID: `${repo.id}` }}
+                    >
+                      View secrets
+                    </Link>
                   </li>
                 ))}
               </ul>

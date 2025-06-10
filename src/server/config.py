@@ -2,7 +2,7 @@ import dotenv, os
 from shared.utils import env_or_default
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
-from .storage import Redis
+from .storage import Redis, Database
 from .httpreqs import HttpClient
 from .oauth import GitHubOauth
 
@@ -23,8 +23,24 @@ EVAULT_TOKEN_POLL_MAX_ATTEMPT = 10
 REDIS_HOST = env_or_default("REDIS_HOST", "localhost")
 REDIS_PORT_DEFAULT = 6379
 
+PSQL_USER = os.environ["POSTGRES_USER"]
+PSQL_PASSWORD = os.environ["POSTGRES_PASSWORD"]
+PSQL_HOST = os.environ["POSTGRES_HOST"]
+PSQL_PORT = env_or_default("POSTGRES_PORT", "5432")
+PSQL_DBNAME = os.environ["POSTGRES_DBNAME"]
+PSQL_SSLMODE = env_or_default("POSTGRES_SSL", "require")
+assert PSQL_SSLMODE == "require" or PSQL_SSLMODE == "disable"
+
 redis = Redis(REDIS_HOST, port=REDIS_PORT_DEFAULT)
-redis.ping()
+
+db = Database(
+    user=PSQL_USER,
+    password=PSQL_PASSWORD,
+    host=PSQL_HOST,
+    port=int(PSQL_PORT),
+    db=PSQL_DBNAME,
+    ssl=PSQL_SSLMODE,
+)
 
 app = FastAPI()
 app.add_middleware(

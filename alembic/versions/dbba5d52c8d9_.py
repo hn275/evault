@@ -18,17 +18,25 @@ down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+table_name = "repositories"
+
 
 def upgrade() -> None:
     """Upgrade schema."""
     op.create_table(
-        "users",
-        sa.Column("user_id", sa.NotNullable(sa.Integer)),
-        sa.Column("github_access_token", sa.NotNullable(sa.String)),
-        sa.Column("master_password", sa.NotNullable(sa.String)),
+        table_name,
+        sa.Column(
+            "id",
+            sa.NotNullable(sa.Integer),
+            primary_key=True,
+            unique=True,
+            nullable=False,
+        ),
+        sa.Column("owner_id", sa.NotNullable(sa.Integer), nullable=False),
+        sa.Column("password", sa.NotNullable(sa.String), nullable=False),
     )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_table("users")
+    op.drop_table(table_name)
