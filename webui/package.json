@@ -12,12 +12,14 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@tanstack/react-router": "^1.120.20",
+    "@tanstack/react-router-devtools": "^1.120.20",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.2"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@tanstack/router-plugin": "^1.120.20",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react-swc": "^3.9.0",

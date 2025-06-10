@@ -1,7 +1,11 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
-export function Dash() {
+export const Route = createFileRoute("/dashboard/")({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
   const { user } = useUser();
   const { repos } = useRepository();
 
@@ -62,7 +66,7 @@ function useUser() {
   useEffect(() => {
     (async function () {
       const r = await fetch(`/api/dashboard/user`);
-      if (r.status === 403) nav("/");
+      if (r.status === 403) nav({ to: "/" });
 
       const d = (await r.json()) as User;
       setUser(d);
@@ -94,7 +98,7 @@ function useRepository() {
   useEffect(() => {
     (async function () {
       const r = await fetch(`/api/dashboard/repositories`);
-      if (r.status === 403) nav("/");
+      if (r.status === 403) nav({ to: "/" });
       const data = await r.json();
       setRepos(data);
     })();
