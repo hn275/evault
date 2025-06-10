@@ -1,13 +1,12 @@
-import os
 from typing import Literal, Optional, Tuple
 import redis as redispy
-from shared.types import GithubAuthToken, GitHubUser
+from ..pkg.types import GithubAuthToken, GitHubUser
+from ..pkg.utils import env_or_default
 from fastapi import HTTPException
 import sqlalchemy as sql
 from sqlalchemy.orm import Session
 from .models import Repository
 
-from shared.utils import env_or_default
 
 type SSLMode = Literal["require", "disable"]
 

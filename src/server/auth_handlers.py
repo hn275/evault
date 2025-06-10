@@ -1,6 +1,6 @@
 import secrets, fastapi, urllib.parse as urlparse, json
 from fastapi.responses import PlainTextResponse, JSONResponse
-from shared.types import DeviceType, GithubAuthToken
+from ..pkg.types import DeviceType, GithubAuthToken
 from .config import *
 
 

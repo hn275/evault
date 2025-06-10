@@ -1,6 +1,6 @@
 from urllib.parse import urlencode, urlparse
 from requests import Session
-from shared.types import DeviceType, GitHubUser, GithubAuthToken
+from ..pkg.types import DeviceType, GitHubUser, GithubAuthToken
 from typing import Optional
 
 

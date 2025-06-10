@@ -1,4 +1,4 @@
-from evault import extract_username_repo
+from cli.repository import extract_username_repo
 
 
 def test_extract_username_repo():
