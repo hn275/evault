@@ -1,11 +1,13 @@
-from typing import Literal, Optional, Tuple
+from typing import Literal, Optional, Tuple, Dict
 import redis as redispy
 from ..pkg.types import GithubAuthToken, GitHubUser
 from ..pkg.utils import env_or_default
 from fastapi import HTTPException
 import sqlalchemy as sql
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .models import Repository
+from psycopg2.errors import UniqueViolation
 
 
 type SSLMode = Literal["require", "disable"]
@@ -29,8 +31,21 @@ class Database:
 
     def get_repository(self, repo_id: int) -> Optional[Repository]:
         with Session(self.engine) as s:
-            stm = sql.select(Repository).where(Repository.id == repo_id)
-            return s.scalar(stm)
+            return s.get(Repository, repo_id)
+
+    def create_new_repository(self, repo_id: int, owner_id: int, digest: str):
+        repo = Repository(id=repo_id, owner_id=owner_id, password=digest)
+
+        with Session(self.engine) as s:
+            try:
+                s.add(repo)
+                s.commit()
+                s.refresh(repo)
+            except IntegrityError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Repository exists.",
+                )
 
 
 class Redis(redispy.Redis):
@@ -65,11 +80,12 @@ class Redis(redispy.Redis):
 
     def get_user_session(
         self, evault_access_token: str
-    ) -> Optional[Tuple[GitHubUser, GithubAuthToken]]:
+    ) -> Tuple[GitHubUser, GithubAuthToken]:
         key = self._make_session_key(evault_access_token)
         d = self.hgetall(name=key)
+        d: Dict[bytes, bytes] = d
         if d == {}:
-            return None
+            raise HTTPException(status_code=403, detail="Session expired.")
 
         gh_user = GitHubUser(
             id=int(d.get(b"user-id").decode()),
@@ -95,7 +111,12 @@ class Redis(redispy.Redis):
 
         self.expire(key, ttl)
 
-    def cache_token_poll(self, session_id: str, evault_access_token: str, ttl: int):
+    def cache_token_poll(
+        self,
+        session_id: str,
+        evault_access_token: str,
+        ttl: int,
+    ):
         key = f"evault-token-poll:{session_id}"
         self.set(name=key, value=evault_access_token, ex=ttl)
 
@@ -104,7 +125,7 @@ class Redis(redispy.Redis):
         if t:
             return t.decode()
 
-        return None
+        raise HTTPException(status_code=404)
 
     def _make_session_key(self, session_id: str) -> str:
         return f"evault-session:{session_id}"

@@ -32,8 +32,16 @@ def upgrade() -> None:
             unique=True,
             nullable=False,
         ),
-        sa.Column("owner_id", sa.NotNullable(sa.Integer), nullable=False),
-        sa.Column("password", sa.NotNullable(sa.String), nullable=False),
+        sa.Column(
+            "owner_id",
+            sa.NotNullable(sa.Integer),
+            nullable=False,
+        ),
+        sa.Column(
+            "password",
+            sa.NotNullable(sa.String),
+            nullable=False,
+        ),
     )
 
 

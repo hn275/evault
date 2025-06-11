@@ -15,7 +15,9 @@ GITHUB_OAUTH_REDIRECT_URI = env_or_default(
 )
 GITHUB_OAUTH_STATE_TTL = 120  # 2 minutes
 
-EVAULT_SESSION_TOKEN_TTL = 300  # 5 minutes
+EVAULT_SESSION_TOKEN_TTL = (
+    3000  # 5 minutes // TODO: change this back to 300 seconds (5 mins)
+)
 EVAULT_WEB_URL = env_or_default("EVAULT_WEB_URL", "http://localhost:5173")
 EVAULT_TOKEN_POLL_TTL = 30
 EVAULT_TOKEN_POLL_MAX_ATTEMPT = 10
