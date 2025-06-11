@@ -1,19 +1,32 @@
-import { createFileRoute, useLoaderData } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  useLoaderData,
+  useSearch,
+} from "@tanstack/react-router";
 import {
   QueryClient,
   useMutation,
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
-import { Button, TextField } from "@mui/material";
+import { Button, Stack, TextField } from "@mui/material";
 import { useEffect } from "react";
 
 // Create a client
 const queryClient = new QueryClient();
 
+type SearchParams = {
+  repo: string;
+};
+
 export const Route = createFileRoute("/dashboard/repository/$repoID")({
   component: RouteComponent,
   loader: async ({ params }) => fetchRepoData(parseInt(params.repoID)),
+  validateSearch: (search: Record<string, unknown>): SearchParams => {
+    const repo = search!.repo as string;
+    return { repo };
+  },
 });
 
 type Status = {
@@ -35,28 +48,49 @@ function RouteComponent() {
 }
 
 function Page() {
-  const repo = useLoaderData({ from: "/dashboard/repository/$repoID" });
+  const repoID = useLoaderData({ from: "/dashboard/repository/$repoID" });
+  const { repo: repoFullName } = useSearch({
+    from: "/dashboard/repository/$repoID",
+  });
 
-  const { form } = useNewRepository();
+  switch (repoID.status) {
+    case 403:
+      return (
+        <>
+          Session expired. Go back&nbsp;
+          <Link to="/">Home.</Link>
+        </>
+      );
 
+    case 404:
+      return <NewVault repoID={repoID.id} repoFullName={repoFullName} />;
+
+    case 200:
+      return <>Vault found.</>;
+
+    default:
+      return <>Something went wrong.</>;
+  }
+}
+
+function NewVault({
+  repoID,
+  repoFullName,
+}: {
+  repoID: number;
+  repoFullName: string;
+}) {
+  const { form } = useNewRepository(repoID, repoFullName);
   return (
     <>
-      <form
+      <Stack
+        component="form"
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
           form.handleSubmit();
         }}
       >
-        <form.Field
-          name="repo_id"
-          children={() => (
-            <>
-              <input name="repo_id" type="hidden" value={repo.id} />
-            </>
-          )}
-        />
-
         <form.Field
           name="password"
           children={(field) => (
@@ -71,7 +105,6 @@ function Page() {
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
-              <FieldInfo field={field} />
             </>
           )}
         />
@@ -90,8 +123,6 @@ function Page() {
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
-
-              <FieldInfo field={field} />
             </>
           )}
         />
@@ -99,54 +130,41 @@ function Page() {
         <form.Subscribe
           selector={(state) => [state.canSubmit, state.isSubmitting]}
           children={([canSubmit, isSubmitting]) => (
-            <Button
-              variant="contained"
-              type="submit"
-              disabled={form.state.isSubmitting}
-            >
-              {isSubmitting ? "..." : "Submit"}
-            </Button>
+            <>
+              <Button
+                variant="contained"
+                type="submit"
+                disabled={!canSubmit || isSubmitting}
+              >
+                {isSubmitting ? "..." : "Submit"}
+              </Button>
+
+              {!form.state.isValid && <em>{form.state.errors.join(",")}</em>}
+            </>
           )}
         />
-      </form>
-    </>
-  );
-}
-
-function FieldInfo({ field }: { field: AnyFieldApi }) {
-  useEffect(() => console.log(field), [field]);
-  // console.log(field.state.meta);
-  return (
-    <>
-      {field.state.meta.isTouched && !field.state.meta.isValid ? (
-        <em>{field.state.meta.errors.join(", ")}</em>
-      ) : null}
-      {field.state.meta.isValidating ? "Validating..." : null}
-      {field.state.meta.errors.length !== 0 ? (
-        field.state.meta.errorMap.onSubmit
-      ) : (
-        <></>
-      )}
+      </Stack>
     </>
   );
 }
 
 type NewFormProps = {
-  repo_id: number;
   password: string;
-  passwordConfirm: string;
 };
 
-function useNewRepository() {
+function useNewRepository(repoID: number, repoFullName: string) {
   const mut = useMutation({
     mutationKey: ["newRepoForm"],
-    mutationFn: async (data: NewFormProps) => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          console.log(data);
-          resolve(data);
-        }, 1000);
-      }).then((_) => {});
+    mutationFn: async (formData: NewFormProps) => {
+      console.table(formData);
+      const params = new URLSearchParams({
+        repo_id: `${repoID}`,
+        password: formData.password,
+        repo_fullname: repoFullName,
+      });
+      return fetch(`/api/dashboard/repository/new?${params.toString()}`, {
+        method: "POST",
+      });
     },
   });
 
@@ -154,28 +172,17 @@ function useNewRepository() {
     defaultValues: {
       password: "",
       passwordConfirm: "",
-      repo_id: "",
     },
     validators: {
       onSubmit: ({ value }) => {
         const { password, passwordConfirm } = value;
         if (password !== passwordConfirm) {
-          const errMsg = "Passwords do not match.";
-          return {
-            password: errMsg,
-            passwordConfirm: errMsg,
-          };
+          return "Passwords do not match.";
         }
-
-        return null;
       },
     },
     onSubmit: async ({ value }) => {
-      mut.mutate({
-        repo_id: parseInt(value.repo_id),
-        password: value.password,
-        passwordConfirm: value.passwordConfirm,
-      });
+      mut.mutate(value);
     },
   });
 

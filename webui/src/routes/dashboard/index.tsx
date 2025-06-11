@@ -38,6 +38,7 @@ function RouteComponent() {
                     <Link
                       to="/dashboard/repository/$repoID"
                       params={{ repoID: `${repo.id}` }}
+                      search={{ repo: repo.full_name }}
                     >
                       View secrets
                     </Link>
