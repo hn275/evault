@@ -3,3 +3,4 @@
 .env
 evault-credentials.json
 webui/node_modules/
+tmp/
