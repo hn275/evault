@@ -1,5 +1,7 @@
+import { Avatar, Box, Stack, Typography } from "@mui/material";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { Breadcrumbs } from "../../components/Breadcrumbs";
 
 export const Route = createFileRoute("/dashboard/")({
   component: RouteComponent,
@@ -11,16 +13,21 @@ function RouteComponent() {
 
   return (
     <>
-      Dash
+      <Breadcrumbs paths={[{ display: "Dashboard", href: "/dashboard" }]} />
       {user ? (
         <>
-          <section>
-            <p>Username: {user.name}</p>
-            <p>Login: {user.login}</p>
-            <p>User Type: {user.type}</p>
-            <p>Email: {user.email}</p>
-            <img src={user.avatar_url} />
-          </section>
+          <Box display="flex" alignItems="center" gap={2}>
+            <Avatar src={user.avatar_url} alt={user.name} />
+            <Stack>
+              <Typography fontWeight={500} fontSize="1.2em">
+                {user.name}
+              </Typography>
+              <Typography fontWeight={400} fontSize="0.8em">
+                {user.login}
+              </Typography>
+            </Stack>
+            {/* <p>Email: {user.email}</p> */}
+          </Box>
 
           <section>
             {repos ? (
