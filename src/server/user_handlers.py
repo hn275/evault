@@ -1,6 +1,5 @@
 from dataclasses import asdict
-from .config import *
-from ..pkg.types import Cookie
+from .config import db, app, redis, EVAULT_SESSION_TOKEN_TTL, httpclient
 from typing import Optional
 from fastapi.routing import APIRouter
 from fastapi import Depends, HTTPException, Cookie
