@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { Button, Stack, TextField } from "@mui/material";
+import { Breadcrumbs } from "../../../components/Breadcrumbs";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -52,24 +53,30 @@ function Page() {
     from: "/dashboard/repository/$repoID",
   });
 
-  switch (repoID.status) {
-    case 403:
-      return (
+  const breadcrumbs = [
+    { display: "Dashboard", href: "/dashboard" },
+    { display: repoFullName, href: `https://github.com/${repoFullName}` },
+  ];
+
+  return (
+    <>
+      <Breadcrumbs paths={breadcrumbs} />
+      {repoID.status === 403 ? (
         <>
           Session expired. Go back&nbsp;
           <Link to="/">Home.</Link>
         </>
-      );
-
-    case 404:
-      return <NewVault repoID={repoID.id} repoFullName={repoFullName} />;
-
-    case 200:
-      return <>Vault found.</>;
-
-    default:
-      return <>Something went wrong.</>;
-  }
+      ) : repoID.status === 200 ? (
+        <>Vault found.</>
+      ) : repoID.status === 404 ? (
+        <>
+          <NewVault repoID={repoID.id} repoFullName={repoFullName} />
+        </>
+      ) : (
+        <>Something went wrong.</>
+      )}
+    </>
+  );
 }
 
 function NewVault({
