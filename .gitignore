@@ -4,3 +4,7 @@
 evault-credentials.json
 webui/node_modules/
 tmp/
+
+.redis/
+.pgdata/
+.docker/
