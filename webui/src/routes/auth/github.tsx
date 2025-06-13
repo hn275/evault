@@ -4,25 +4,20 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { z } from "zod/v4";
 
-type DeviceType = "web" | "cli";
+const paramParser = z.object({
+  session_id: z.string(),
+  device_type: z.enum(["web", "cli"]),
+  code: z.string(),
+  state: z.string(),
+});
 
-type AuthGitHubSearchParam = {
-  session_id: string;
-  device_type: DeviceType;
-  code: string;
-  state: string;
-};
+type SearchParam = z.infer<typeof paramParser>;
 
 export const Route = createFileRoute("/auth/github")({
-  validateSearch: (s: Record<string, string>): AuthGitHubSearchParam => {
-    return {
-      session_id: s.session_id,
-      device_type: s.device_type as DeviceType,
-      code: s.code,
-      state: s.state,
-    };
-  },
+  validateSearch: (s: Record<string, unknown>): SearchParam =>
+    paramParser.parse(s),
   component: RouteComponent,
 });
 
@@ -44,27 +39,23 @@ function useAuthGithub() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const sessionId = param["session_id"];
-    const oauthCode = param["code"];
-    const oauthState = param["state"];
-    const deviceType = param["device_type"];
+    const { data: searchParam, error: searchParamError } =
+      paramParser.safeParse(param);
 
-    if (!sessionId || !oauthCode || !oauthState || !deviceType) {
-      throw new Error("Invalid params.");
+    if (searchParamError) {
+      setError("Invalid authentication parameters.");
+      console.error(searchParamError.message);
+      setLoading(false);
+      return;
     }
 
-    (async () => {
-      const p = new URLSearchParams({
-        session_id: sessionId,
-        code: oauthCode,
-        state: oauthState,
-        device_type: deviceType,
-      });
+    const p = new URLSearchParams(searchParam);
 
+    (async () => {
       try {
         await fetch(`/api/auth/token?${p.toString()}`);
 
-        if (deviceType === "web") {
+        if (searchParam.device_type === "web") {
           nav({ to: "/dashboard" });
         }
       } catch (e) {
