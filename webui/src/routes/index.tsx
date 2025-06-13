@@ -19,15 +19,10 @@ function App() {
 
 function useHome() {
   async function signInRedirect() {
-    // get session_id
-    let r = await fetch(`/api/auth?device_type=web`);
-    const url = new URL(await r.text());
-    const searchParams = new URLSearchParams(url.search);
-    const sessionID = searchParams.get("session_id");
-
-    // get auth url and redirect
-    r = await fetch(`/api/auth/url?session_id=${sessionID}`);
-    window.location.href = await r.text();
+    // NOTE: can't do `fetch` here because the server is redirecting the request
+    // to the OAuth provider (GitHub), with `fetch`, browser blocks the redirect.
+    // this way the browser itself is making the `GET` request to be redirected.
+    window.location.href = "/api/auth?device_type=web";
   }
 
   return { signInRedirect };
