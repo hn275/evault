@@ -125,5 +125,31 @@ class Redis(redispy.Redis):
 
         raise HTTPException(status_code=404)
 
+    def cache_auth_url(self, session_id: str, auth_url: str, ttl: int):
+        key = self._make_auth_url_key(session_id)
+        self.set(name=key, value=auth_url, ex=ttl)
+
+    def get_auth_url(self, session_id: str) -> str:
+        key = self._make_auth_url_key(session_id)
+        t = self.get(key)
+        if not t:
+            raise HTTPException(status_code=401)
+
+        return t.decode()
+
+    def renew_auth_url(self, session_id: str, ttl: int):
+        key = self._make_auth_url_key(session_id)
+        a = self.expire(key, ttl)
+        print(f"renew auth: {a}")
+
+    def remove_auth_url(self, session_id: str):
+        key = self._make_auth_url_key(session_id)
+        url_removed = self.delete(key)
+        if url_removed != 1:
+            raise HTTPException(status_code=401)
+
     def _make_session_key(self, session_id: str) -> str:
         return f"evault-session:{session_id}"
+
+    def _make_auth_url_key(self, session_id: str) -> str:
+        return f"evault-auth:{session_id}"

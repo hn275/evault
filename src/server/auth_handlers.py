@@ -1,5 +1,6 @@
 import secrets, fastapi, urllib.parse as urlparse, json
-from fastapi.responses import PlainTextResponse, JSONResponse
+from fastapi.responses import PlainTextResponse, JSONResponse, RedirectResponse
+from fastapi import status
 from ..pkg.types import DeviceType, GithubAuthToken
 from .config import (
     app,
@@ -19,9 +20,11 @@ async def auth(device_type: DeviceType):
     oauth_state = secrets.token_urlsafe(32)
     session_id = secrets.token_urlsafe(16)
     oauth_login_url = oauth_client.make_login_url(oauth_state, session_id, device_type)
-    redis.set(
-        f"evault-login-url:{session_id}", oauth_login_url, ex=GITHUB_OAUTH_STATE_TTL
-    )
+
+    redis.cache_auth_url(session_id, oauth_login_url, GITHUB_OAUTH_STATE_TTL)
+    if device_type == "web":
+        return RedirectResponse(url=oauth_login_url, status_code=status.HTTP_302_FOUND)
+
     return fastapi.Response(
         content=f"{EVAULT_WEB_URL}/auth?{urlparse.urlencode({"session_id": session_id})}",
         media_type="text/plain",
@@ -30,26 +33,20 @@ async def auth(device_type: DeviceType):
 
 @app.get("/api/auth/url")
 def auth_url(session_id: str):
-    oauth_login_url = redis.get(f"evault-login-url:{session_id}")
+    oauth_login_url = redis.get_auth_url(session_id)
     if oauth_login_url == None:
         return PlainTextResponse(status_code=401, content="Login link expired.")
 
     oauth_login_url = oauth_login_url.decode()
-    redis.expire(f"evault-login-url:{session_id}", GITHUB_OAUTH_STATE_TTL)
+    redis.renew_auth_url(session_id, GITHUB_OAUTH_STATE_TTL)
 
     return PlainTextResponse(content=oauth_login_url)
 
 
 @app.get("/api/auth/token")
 def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
-    oauth_login_url = redis.getdel(f"evault-login-url:{session_id}")
-    if oauth_login_url == None:
-        return PlainTextResponse(
-            status_code=401,
-            content="Login link expired.",
-        )
-
-    oauth_login_url = oauth_login_url.decode()
+    oauth_login_url = redis.get_auth_url(session_id)
+    redis.remove_auth_url(session_id)
     params = urlparse.parse_qs(urlparse.urlparse(oauth_login_url).query)
 
     # verify state
