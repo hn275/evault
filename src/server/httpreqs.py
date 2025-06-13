@@ -35,7 +35,7 @@ class HttpClient(requests.Session):
         url = f"{self.base_url}/user/repos"
         headers = self._make_header(token_type, access_token)
 
-        r = self.get(url, headers=headers)
+        r = self.get(url, headers=headers, params={"sort": "pushed", "direction": "desc"})
         assert r.status_code == 200
 
         repos_data = r.json()
