@@ -1,6 +1,7 @@
 import secrets, fastapi, urllib.parse as urlparse, json
 from fastapi.responses import PlainTextResponse, JSONResponse, RedirectResponse
 from fastapi import status
+from starlette.status import HTTP_200_OK
 from ..pkg.types import DeviceType, GithubAuthToken
 from .config import (
     app,
@@ -79,7 +80,7 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
         evault_access_token, gh_token, gh_user, EVAULT_SESSION_TOKEN_TTL
     )
 
-    response = fastapi.Response(status_code=200)
+    response = fastapi.Response(status_code=HTTP_200_OK)
     if device_type == "web":
         response.set_cookie(
             key="evault_access_token",
