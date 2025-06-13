@@ -55,6 +55,10 @@ class HttpClient(requests.Session):
 
         data = req.json()
 
+        # if the user has MFA, they do not have an email, set as N/A
+        if data["email"] is None:
+            data["email"] = "N/A"
+
         return dacite.from_dict(GitHubUser, data)
 
     def fetch_repository(
