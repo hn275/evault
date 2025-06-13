@@ -4,8 +4,6 @@ services:
     container_name: evault-redis
     ports:
       - "6379:6379"
-    volumes:
-      - ./tmp/evault/redis:/data
     command: redis-server --appendonly yes
     environment:
       - REDIS_REPLICATION_MODE=master
@@ -15,8 +13,6 @@ services:
     container_name: evault-postgres
     ports:
       - "5432:5432"
-    volumes:
-      - ./tmp/evault/postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=evault
       - POSTGRES_USER=${POSTGRES_USER}
