@@ -1,7 +1,17 @@
 import secrets, fastapi, urllib.parse as urlparse, json
 from fastapi.responses import PlainTextResponse, JSONResponse
 from ..pkg.types import DeviceType, GithubAuthToken
-from .config import *
+from .config import (
+    app,
+    redis,
+    httpclient,
+    oauth_client,
+    EVAULT_WEB_URL,
+    EVAULT_TOKEN_POLL_TTL,
+    GITHUB_OAUTH_STATE_TTL,
+    EVAULT_SESSION_TOKEN_TTL,
+    EVAULT_TOKEN_POLL_MAX_ATTEMPT,
+)
 
 
 @app.get("/api/auth")
