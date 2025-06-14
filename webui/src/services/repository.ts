@@ -3,8 +3,13 @@ import type { Repository } from "../types/Repository";
 import { fetchWithRedirect } from "./common";
 
 // Fetch the repository by ID with owner validation
-export async function getRepositoryByIDWithOwnerValidation(repoID: number, repoFullName: string): Promise<Status> {
-  const r = await fetchWithRedirect(`/api/dashboard/repository/${repoID}?repo=${repoFullName}`);
+export async function getRepositoryByIDWithOwnerValidation(
+  repoID: number,
+  repoFullName: string,
+): Promise<Status> {
+  const r = await fetchWithRedirect(
+    `/api/dashboard/repository/${repoID}?repo=${repoFullName}`,
+  );
   return { id: repoID, status: r.status };
 }
 
@@ -14,7 +19,9 @@ export async function getUserRepositories(): Promise<Repository[]> {
   return (await r.json()) as Repository[];
 }
 
-export async function createNewRepository(params: URLSearchParams): Promise<Response> {
+export async function createNewRepository(
+  params: URLSearchParams,
+): Promise<Response> {
   return fetchWithRedirect(
     `/api/dashboard/repository/new?${params.toString()}`,
     {

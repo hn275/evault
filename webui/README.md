@@ -62,15 +62,18 @@ The following are guidelines for what goes where within the code base, please no
 - `/src/routes/` - Contains all route components and their associated logic
 
 - `/src/components/` - Reusable UI components
+
   - `/dashboard/` - Dashboard-specific components
   - `/common/` - Shared components used across multiple features
 
 - `/src/services/` - API and service layer
+
   - `common.ts` - Shared service utilities
 
 - `/src/hooks/` - Custom React hooks
 
 - `/src/utils/` - Utility functions and helpers
+
   - `/zod/` - Zod schema definitions and parsers
 
 - `/src/types/` - TypeScript type definitions
@@ -78,22 +81,26 @@ The following are guidelines for what goes where within the code base, please no
 ### File Organization Principles
 
 1. **Route Components**
+
    - Keep route components simple and focused on routing logic
    - Try to put all business logics to hooks
    - Delegate complex UI to separate components
    - Queries should be declared here, unless we really need it in the route components
 
 2. **Components**
+
    - Route-specific components go in the corresponding folder path
    - Keep components small and focused on a single responsibility
    - On mutations should be declared on the route-specific components, queries should be very rarely needed to be declared here
 
 3. **Services**
+
    - One service file per data type (ie. repository, auth)
    - Keep API calls and data transformation logic here
    - Use common utilities for shared functionality (ie. if we need to add a redirect to all authenticated API calls)
 
 4. **Hooks**
+
    - Extract reusable logic into custom hooks
    - Group related hooks by feature
    - Keep hooks focused on a single concern

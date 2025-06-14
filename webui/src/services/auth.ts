@@ -7,7 +7,7 @@ export async function getUser(): Promise<User> {
   return (await r.json()) as User;
 }
 
-// Exchange the GitHub authentication 
+// Exchange the GitHub authentication
 export async function getGitHubAuth(p: URLSearchParams) {
   return fetch(`/api/auth/token?${p.toString()}`);
 }
