@@ -27,7 +27,11 @@ export function NewVault({
   open,
   setDialogOpen,
 }: NewVaultDialogProps) {
-  const { form, cancel } = useNewRepository(repoID, repoFullName, setDialogOpen);
+  const { form, cancel } = useNewRepository(
+    repoID,
+    repoFullName,
+    setDialogOpen,
+  );
   return (
     <Dialog
       open={open}
@@ -99,7 +103,9 @@ export function NewVault({
               >
                 {isSubmitting ? "..." : "Submit"}
               </Button>
-              <Button variant="outlined" onClick={cancel}>Cancel</Button>
+              <Button variant="outlined" onClick={cancel}>
+                Cancel
+              </Button>
 
               {!form.state.isValid && <em>{form.state.errors.join(",")}</em>}
             </>
@@ -134,23 +140,25 @@ function useNewRepository(
       });
       return fetch(`/api/dashboard/repository/new?${params.toString()}`, {
         method: "POST",
-      }).then((r) => {
-        if (r.status === 201 || r.status === 200) {
-          setDialogOpen(false);
-          router.invalidate();
-          notifications.show("Vault created successfully", {
-            severity: "success",
+      })
+        .then((r) => {
+          if (r.status === 201 || r.status === 200) {
+            setDialogOpen(false);
+            router.invalidate();
+            notifications.show("Vault created successfully", {
+              severity: "success",
+              autoHideDuration: 3000,
+            });
+          }
+          return r;
+        })
+        .catch((e) => {
+          notifications.show("Failed to create vault", {
+            severity: "error",
             autoHideDuration: 3000,
           });
-        }
-        return r;
-      }).catch((e) => {
-        notifications.show("Failed to create vault", {
-          severity: "error",
-          autoHideDuration: 3000,
+          throw e;
         });
-        throw e;
-      });
     },
   });
 
