@@ -1,13 +1,11 @@
 from typing import Literal, Optional, Tuple, Dict
 import redis as redispy
 from ..pkg.types import GithubAuthToken, GitHubUser
-from ..pkg.utils import env_or_default
 from fastapi import HTTPException
 import sqlalchemy as sql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .models import Repository
-from psycopg2.errors import UniqueViolation
 
 
 type SSLMode = Literal["require", "disable"]
@@ -27,7 +25,7 @@ class Database:
     ) -> None:
         conn_str = f"postgresql://{user}:{password}@{host}:{port}/{db}?sslmode={ssl}"
         self.engine = sql.create_engine(conn_str, echo=True)
-        print(f"Connected to database")
+        print("Connected to database")
 
     def get_repository(self, repo_id: int) -> Optional[Repository]:
         with Session(self.engine) as s:
@@ -52,7 +50,7 @@ class Redis(redispy.Redis):
     def __init__(self, host: str, port: int) -> None:
         super().__init__(host, port)
         self.ping()
-        print(f"Connected to redis")
+        print("Connected to redis")
 
     def create_user_session(
         self,
@@ -127,5 +125,31 @@ class Redis(redispy.Redis):
 
         raise HTTPException(status_code=404)
 
+    def cache_auth_url(self, session_id: str, auth_url: str, ttl: int):
+        key = self._make_auth_url_key(session_id)
+        self.set(name=key, value=auth_url, ex=ttl)
+
+    def get_auth_url(self, session_id: str) -> str:
+        key = self._make_auth_url_key(session_id)
+        t = self.get(key)
+        if not t:
+            raise HTTPException(status_code=401)
+
+        return t.decode()
+
+    def renew_auth_url(self, session_id: str, ttl: int):
+        key = self._make_auth_url_key(session_id)
+        a = self.expire(key, ttl)
+        print(f"renew auth: {a}")
+
+    def remove_auth_url(self, session_id: str):
+        key = self._make_auth_url_key(session_id)
+        url_removed = self.delete(key)
+        if url_removed != 1:
+            raise HTTPException(status_code=401)
+
     def _make_session_key(self, session_id: str) -> str:
         return f"evault-session:{session_id}"
+
+    def _make_auth_url_key(self, session_id: str) -> str:
+        return f"evault-auth:{session_id}"
