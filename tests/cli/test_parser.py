@@ -1,4 +1,4 @@
-from cli.repository import extract_username_repo
+from src.cli.repository import extract_username_repo
 
 
 def test_extract_username_repo():
