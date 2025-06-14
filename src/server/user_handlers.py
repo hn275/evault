@@ -1,4 +1,6 @@
 from dataclasses import asdict
+
+from fastapi.encoders import jsonable_encoder
 from .config import db, app, redis, EVAULT_SESSION_TOKEN_TTL, httpclient
 from typing import Optional
 from fastapi.routing import APIRouter
@@ -60,12 +62,36 @@ def get_user_repositories(evault_access_token: str = Depends(auth_middleware)):
 
 
 @dashboard_router.get("/repository/{repo_id}")
-def get_repository(repo_id: int):
-    repo = db.get_repository(repo_id)
-    if repo == None:
-        raise HTTPException(status_code=404)
+def get_repository(
+    repo_id: int, repo: str, evault_access_token: str = Depends(auth_middleware)
+):
+    db_repo = db.get_repository(repo_id)
 
-    return "OK"
+    # if repo is provided, we need to check for ownership
+    if repo != None and db_repo is None:
+        [owner, repo_name] = repo.split("/")
+
+        d = redis.get_user_session(evault_access_token)
+        assert d != None
+
+        remote_repository = httpclient.fetch_repository(
+            d.token.token_type,
+            d.token.access_token,
+            owner,
+            repo_name,
+        )
+
+        if d.user.id != remote_repository.owner.id:
+            raise HTTPException(status_code=403, detail="Not repository owner.")
+
+    # if the code reaches here, user is owner
+    if db_repo is None:
+        raise HTTPException(status_code=404, detail="Repository not found.")
+
+    return JSONResponse(
+        status_code=200,
+        content=jsonable_encoder(db_repo),
+    )
 
 
 @dashboard_router.post("/repository/new")
