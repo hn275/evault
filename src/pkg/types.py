@@ -1,7 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+import flatten_dict
 from pydantic import BaseModel
-from typing import Annotated, Literal
-import fastapi
+from typing import Dict, Literal
 
 type DeviceType = Literal["web", "cli"]
 
@@ -30,9 +30,32 @@ class GitHubUser:
     avatar_url: str
 
 
+_FLATTEN_DICT_REDUCER = "dot"
+
+
+@dataclass
+class UserSession:
+    device_type: DeviceType
+    user: GitHubUser
+    token: GithubAuthToken
+
+    @staticmethod
+    def from_flat_map(flat_map: Dict[str, int | str]) -> "UserSession":
+        m = flatten_dict.unflatten(flat_map, splitter=_FLATTEN_DICT_REDUCER)
+        return UserSession(
+            device_type=m["device_type"],
+            user=GitHubUser(**m["user"]),
+            token=GithubAuthToken(**m["token"]),
+        )
+
+    def make_flat_map(self) -> Dict[str, int | str]:
+        m = {
+            "device_type": self.device_type,
+            "user": asdict(self.user),
+            "token": asdict(self.token),
+        }
+        return flatten_dict.flatten(m, reducer=_FLATTEN_DICT_REDUCER)
+
+
 class RequestCookieBase(BaseModel):
     evault_access_token: str
-
-
-# type Cookie = Annotated[RequestCookieBase, fastapi.Cookie()]
-type Cookie = Annotated[str, fastapi.Cookie()]
