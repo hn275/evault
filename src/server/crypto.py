@@ -18,6 +18,7 @@ def derive_repo_key(
         + repo_id.to_bytes(int64_bytelen, sys.byteorder)
         + repo_password.encode()
     )
+    # pylint: disable=E1102
     return blake3(key_material, derive_key_context=_KDF_CONTEXT_STRING).digest(
         length=key_len
     )
