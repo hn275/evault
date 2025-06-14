@@ -30,7 +30,7 @@ jobs:
       - name: Run format checker
         run: |
           npm run format:check || \
-          (echo "Bad formatting, run 'npm run format:write'")
+          (echo "Bad formatting, run 'npm run format:write'"; exit 1)
 
       - name: Run linter
         run: npm run lint
