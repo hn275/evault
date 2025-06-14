@@ -85,7 +85,7 @@ class Redis(redispy.Redis):
         d = self.hgetall(name=key)
         d: Dict[bytes, bytes] = d
         if d == {}:
-            raise HTTPException(status_code=403, detail="Session expired.")
+            raise HTTPException(status_code=440, detail="Session expired.")
 
         gh_user = GitHubUser(
             id=int(d.get(b"user-id").decode()),
@@ -107,7 +107,7 @@ class Redis(redispy.Redis):
         key = self._make_session_key(evault_access_token)
         ctr = self.exists(key)
         if ctr == 0:
-            raise HTTPException(status_code=403, detail="Session expired.")
+            raise HTTPException(status_code=440, detail="Session expired.")
 
         self.expire(key, ttl)
 
