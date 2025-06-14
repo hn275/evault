@@ -74,16 +74,14 @@ def get_repository(
         d = redis.get_user_session(evault_access_token)
         assert d != None
 
-        (user, token) = d
-
         remote_repository = httpclient.fetch_repository(
-            token.token_type,
-            token.access_token,
+            d.token.token_type,
+            d.token.access_token,
             owner,
             repo_name,
         )
         
-        if user.id != remote_repository.owner.id:
+        if d.user.id != remote_repository.owner.id:
             raise HTTPException(status_code=403, detail="Not repository owner.")
 
     # if the code reaches here, user is owner
