@@ -66,7 +66,7 @@ def get_repository(
     repo_id: int, repo: str, evault_access_token: str = Depends(auth_middleware)
 ):
     db_repo = db.get_repository(repo_id)
-    
+
     # if repo is provided, we need to check for ownership
     if repo != None and db_repo is None:
         [owner, repo_name] = repo.split("/")
@@ -80,7 +80,7 @@ def get_repository(
             owner,
             repo_name,
         )
-        
+
         if d.user.id != remote_repository.owner.id:
             raise HTTPException(status_code=403, detail="Not repository owner.")
 
@@ -89,8 +89,10 @@ def get_repository(
         raise HTTPException(status_code=404, detail="Repository not found.")
 
     return JSONResponse(
-        status_code=200, content=jsonable_encoder(db_repo),
+        status_code=200,
+        content=jsonable_encoder(db_repo),
     )
+
 
 @dashboard_router.post("/repository/new")
 def create_new_repository(
