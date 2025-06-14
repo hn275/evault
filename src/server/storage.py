@@ -1,11 +1,11 @@
-from typing import Literal, Optional, Tuple, Dict
+from typing import Literal, Optional
 import redis as redispy
-from ..pkg.types import GithubAuthToken, GitHubUser
 from fastapi import HTTPException
 import sqlalchemy as sql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .models import Repository
+from ..pkg.types import UserSession
 
 
 type SSLMode = Literal["require", "disable"]
@@ -55,51 +55,26 @@ class Redis(redispy.Redis):
     def create_user_session(
         self,
         evault_access_token: str,
-        gh_token: GithubAuthToken,
-        gh_user: GitHubUser,
+        user_session: UserSession,
         ttl: int,
     ):
         key = self._make_session_key(evault_access_token)
-        self.hset(
-            name=key,
-            mapping={
-                "user-id": gh_user.id,
-                "user-name": gh_user.name,
-                "user-login": gh_user.login,
-                "user-email": gh_user.email,
-                "user-type": gh_user.type,
-                "user-avatar_url": gh_user.avatar_url,
-                "github-access-token": gh_token.access_token,
-                "github-access-token-type": gh_token.token_type,
-                "github-access-token-scope": gh_token.scope,
-            },
-        )
+        data = user_session.make_flat_map()
+        self.hset(name=key, mapping=data)
         self.expire(key, ttl)
 
-    def get_user_session(
-        self, evault_access_token: str
-    ) -> Tuple[GitHubUser, GithubAuthToken]:
+    def get_user_session(self, evault_access_token: str) -> UserSession:
         key = self._make_session_key(evault_access_token)
         d = self.hgetall(name=key)
-        d: Dict[bytes, bytes] = d
         if d == {}:
             raise HTTPException(status_code=440, detail="Session expired.")
 
-        gh_user = GitHubUser(
-            id=int(d.get(b"user-id").decode()),
-            name=d.get(b"user-name").decode(),
-            login=d.get(b"user-login").decode(),
-            email=d.get(b"user-email").decode(),
-            type=d.get(b"user-type").decode(),
-            avatar_url=d.get(b"user-avatar_url").decode(),
-        )
-        gh_token = GithubAuthToken(
-            access_token=d.get(b"github-access-token").decode(),
-            token_type=d.get(b"github-access-token-type").decode(),
-            scope=d.get(b"github-access-token-scope").decode(),
-        )
+        m = {}
+        for key, val in d.items():
+            m[key.decode()] = val.decode()
 
-        return (gh_user, gh_token)
+        m["user.id"] = int(m["user.id"])
+        return UserSession.from_flat_map(m)
 
     def renew_user_session(self, evault_access_token: str, ttl: int):
         key = self._make_session_key(evault_access_token)

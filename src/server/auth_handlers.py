@@ -14,6 +14,7 @@ from .config import (
     EVAULT_SESSION_TOKEN_TTL,
     EVAULT_TOKEN_POLL_MAX_ATTEMPT,
 )
+from ..pkg.types import UserSession
 
 
 @app.get("/api/auth")
@@ -62,8 +63,7 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     r = httpclient.post(auth_url, headers={"Accept": "application/json; charset=utf-8"})
     assert r.status_code == 200
 
-    d = r.json()
-    gh_token = GithubAuthToken(d["access_token"], d["token_type"], d["scope"])
+    gh_token = GithubAuthToken(**r.json())
 
     # get user information
     gh_user = httpclient.fetch_github_credentials(
@@ -76,8 +76,9 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     # store a (new) session: github user to cache
     # create an evault access token, then cache it
     evault_access_token = secrets.token_urlsafe(32)
+    user_session = UserSession(device_type, gh_user, gh_token)
     redis.create_user_session(
-        evault_access_token, gh_token, gh_user, EVAULT_SESSION_TOKEN_TTL
+        evault_access_token, user_session, EVAULT_SESSION_TOKEN_TTL
     )
 
     response = fastapi.Response(status_code=HTTP_200_OK)
