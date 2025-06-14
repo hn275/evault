@@ -60,12 +60,36 @@ def get_user_repositories(evault_access_token: str = Depends(auth_middleware)):
 
 
 @dashboard_router.get("/repository/{repo_id}")
-def get_repository(repo_id: int):
-    repo = db.get_repository(repo_id)
-    if repo == None:
-        raise HTTPException(status_code=404)
+def get_repository(
+    repo_id: int, repo: str, evault_access_token: str = Depends(auth_middleware)
+):
+    [owner, repo_name] = repo.split("/")
 
-    return "OK"
+    d = redis.get_user_session(evault_access_token)
+    assert d != None
+
+    (user, token) = d
+
+    print(owner, repo_name)
+
+    repository = httpclient.fetch_repository(
+        token.token_type,
+        token.access_token,
+        owner,
+        repo_name,
+    )
+
+    repo = db.get_repository(repo_id)
+    if repo == None and user.id == repository.owner.id:
+        raise HTTPException(status_code=404, detail="Repository not found.")
+
+    if repo == None and user.id != repository.owner.id:
+        raise HTTPException(status_code=403, detail="Not repository owner.")
+
+    return JSONResponse(
+        status_code=200,
+        content=asdict(repository),
+    )
 
 
 @dashboard_router.post("/repository/new")
