@@ -34,21 +34,17 @@ dashboard_router = APIRouter(
 def get_user_information(evault_access_token: str = Depends(auth_middleware)):
     d = redis.get_user_session(evault_access_token)
     assert d != None
-    (user, _) = d
-    return JSONResponse(
-        content=user.__dict__,
-    )
+    return JSONResponse(content=asdict(d.user))
 
 
 @dashboard_router.get("/repositories")
 def get_user_repositories(evault_access_token: str = Depends(auth_middleware)):
-    d = redis.get_user_session(evault_access_token)
-    assert d != None
+    user = redis.get_user_session(evault_access_token)
+    assert user != None
 
-    (_, token) = d
     repos = httpclient.fetch_user_repositories(
-        token.token_type,
-        token.access_token,
+        user.token.token_type,
+        user.token.access_token,
     )
 
     body = [asdict(r) for r in repos]
@@ -85,15 +81,14 @@ def create_new_repository(
     d = redis.get_user_session(evault_access_token)
     assert d != None
 
-    (user, token) = d
     repository = httpclient.fetch_repository(
-        token.token_type,
-        token.access_token,
+        d.token.token_type,
+        d.token.access_token,
         owner,
         repo_name,
     )
 
-    if user.id != repository.owner.id:
+    if d.user.id != repository.owner.id:
         raise HTTPException(status_code=403, detail="Not repository owner.")
 
     digest = PasswordHasher.from_parameters(RFC_9106_LOW_MEMORY).hash(
