@@ -61,7 +61,7 @@ function Page() {
   return (
     <>
       <Breadcrumbs paths={breadcrumbs} />
-      {repoID.status === 403 ? (
+      {repoID.status === 440 ? (
         <>
           Session expired. Go back&nbsp;
           <Link to="/">Home.</Link>

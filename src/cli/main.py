@@ -40,7 +40,7 @@ def get_access_token() -> Optional[str]:
         attempt += 1
 
         r = session.get(poll_url)
-        if r.status_code == 403:
+        if r.status_code == 403 or r.status_code == 440:
             break
 
         assert r.status_code == 200
@@ -72,9 +72,12 @@ def check_credentials(
             url = f"{SERVER}/api/auth/refresh?{urlencode(p)}"
             r = session.get(url)
 
-            if r.status_code == 403:
+            if r.status_code == 440:
                 print("\r\tSession expired.")
                 # os.remove(CREDENTIALS_PATH)
+                return None
+            elif r.status_code == 403:
+                print("\r\tInvalid token.")
                 return None
             elif r.status_code != 200:
                 raise Exception(f"Server error: {r.status_code}")

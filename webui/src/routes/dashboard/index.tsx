@@ -80,7 +80,7 @@ function useUser() {
   useEffect(() => {
     (async function () {
       const r = await fetch(`/api/dashboard/user`);
-      if (r.status === 403) nav({ to: "/" });
+      if (r.status === 440) nav({ to: "/" });
 
       const d = (await r.json()) as User;
       setUser(d);
@@ -112,7 +112,7 @@ function useRepository() {
   useEffect(() => {
     (async function () {
       const r = await fetch(`/api/dashboard/repositories`);
-      if (r.status === 403) nav({ to: "/" });
+      if (r.status === 440) nav({ to: "/" });
       const data = await r.json();
       setRepos(data);
     })();
