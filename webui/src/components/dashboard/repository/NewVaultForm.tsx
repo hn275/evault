@@ -13,6 +13,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Dialog from "@mui/material/Dialog";
 import { useRouter } from "@tanstack/react-router";
 import { useNotifications } from "@toolpad/core/useNotifications";
+import { createNewRepository } from "../../../services/repository";
 
 export interface NewVaultDialogProps {
   repoID: number;
@@ -138,9 +139,7 @@ function useNewRepository(
         password: formData.password,
         repo_fullname: repoFullName,
       });
-      return fetch(`/api/dashboard/repository/new?${params.toString()}`, {
-        method: "POST",
-      })
+      return createNewRepository(params)
         .then((r) => {
           if (r.status === 201 || r.status === 200) {
             setDialogOpen(false);
