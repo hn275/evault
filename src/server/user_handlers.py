@@ -122,7 +122,7 @@ def create_new_repository(
         salt=secrets.token_bytes(32),
     )
 
-    db.create_new_repository(repo_id, repository.owner.id, digest)
+    db.create_new_repository(repo_id, repository.owner.id, digest, repository.full_name, "BUCKET PLACEHOLDER")
     return Response(status_code=201)
 
 

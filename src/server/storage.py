@@ -4,7 +4,7 @@ from fastapi import HTTPException
 import sqlalchemy as sql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from .models import Repository
+from .models import Repository, User
 from ..pkg.types import UserSession
 
 
@@ -31,8 +31,16 @@ class Database:
         with Session(self.engine) as s:
             return s.get(Repository, repo_id)
 
-    def create_new_repository(self, repo_id: int, owner_id: int, digest: str):
-        repo = Repository(id=repo_id, owner_id=owner_id, password=digest)
+    def create_new_repository(
+        self, repo_id: int, owner_id: int, digest: str, name: str, bucket_addr: str
+    ):
+        repo = Repository(
+            id=repo_id,
+            owner_id=owner_id,
+            password=digest,
+            name=name,
+            bucket_addr=bucket_addr,
+        )
 
         with Session(self.engine) as s:
             try:
@@ -44,6 +52,24 @@ class Database:
                     status_code=400,
                     detail="Repository exists.",
                 )
+
+    def create_new_user(self, user_id: int, login: str, name: str, email: str):
+        user = User(id=user_id, login=login, name=name, email=email)
+
+        with Session(self.engine) as s:
+            try:
+                s.add(user)
+                s.commit()
+                s.refresh(user)
+            except IntegrityError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="User exists.",
+                )
+
+    def get_user(self, user_id: int) -> Optional[User]:
+        with Session(self.engine) as s:
+            return s.get(User, user_id)
 
 
 class Redis(redispy.Redis):
