@@ -1,7 +1,9 @@
 import { Avatar, Box, Stack, Typography } from "@mui/material";
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
-import { Breadcrumbs } from "../../components/Breadcrumbs";
+import { createFileRoute } from "@tanstack/react-router";
+import { Breadcrumbs } from "../../components/common/Breadcrumbs";
+import { useUser } from "../../hooks/auth";
+import { RepositoryCard } from "../../components/dashboard/RepositoryCard";
+import { useRepository } from "../../hooks/repository";
 
 export const Route = createFileRoute("/dashboard/")({
   component: RouteComponent,
@@ -33,23 +35,7 @@ function RouteComponent() {
             {repos ? (
               <ul>
                 {repos.map((repo) => (
-                  <li key={repo.id}>
-                    <div>{repo.full_name}</div>
-                    <a href={repo.html_url} target="_blank">
-                      {repo.html_url}
-                    </a>
-                    <div>Visibility: {repo.private ? "private" : "public"}</div>
-                    <div>
-                      Description: {repo.description ?? "No description"}
-                    </div>
-                    <Link
-                      to="/dashboard/repository/$repoID"
-                      params={{ repoID: `${repo.id}` }}
-                      search={{ repo: repo.full_name }}
-                    >
-                      View secrets
-                    </Link>
-                  </li>
+                  <RepositoryCard key={repo.id} repo={repo} />
                 ))}
               </ul>
             ) : (
@@ -62,63 +48,4 @@ function RouteComponent() {
       )}
     </>
   );
-}
-
-type User = {
-  id: number;
-  login: string;
-  email: string;
-  avatar_url: string;
-  name: string;
-  type: string;
-};
-
-function useUser() {
-  const [user, setUser] = useState<User | null>(null);
-  const nav = useNavigate();
-
-  useEffect(() => {
-    (async function () {
-      const r = await fetch(`/api/dashboard/user`);
-      if (r.status === 440) nav({ to: "/" });
-
-      const d = (await r.json()) as User;
-      setUser(d);
-    })();
-  }, [nav]);
-
-  return { user };
-}
-
-type Repository = {
-  id: number;
-  full_name: string;
-  private: boolean;
-  html_url: string;
-  description: null | string;
-  owner: RepoOwner;
-};
-
-type RepoOwner = {
-  id: number;
-  login: string;
-  avatar_url: string;
-};
-
-function useRepository() {
-  const [repos, setRepos] = useState<Repository[] | null>(null);
-  const nav = useNavigate();
-
-  useEffect(() => {
-    (async function () {
-      const r = await fetch(`/api/dashboard/repositories`);
-      if (r.status === 440) nav({ to: "/" });
-      const data = await r.json();
-      setRepos(data);
-    })();
-  }, [nav]);
-
-  return {
-    repos,
-  };
 }

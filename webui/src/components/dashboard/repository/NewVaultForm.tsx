@@ -13,6 +13,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Dialog from "@mui/material/Dialog";
 import { useRouter } from "@tanstack/react-router";
 import { useNotifications } from "@toolpad/core/useNotifications";
+import { createNewRepository } from "../../../services/repository";
 
 export interface NewVaultDialogProps {
   repoID: number;
@@ -120,6 +121,7 @@ type NewFormProps = {
   password: string;
 };
 
+// TODO: I don't think this hook is doing anything extra that needs to be handled through a hook, honestly putting this all in the component will be easier to understand and maintain.
 function useNewRepository(
   repoID: number,
   repoFullName: string,
@@ -138,9 +140,7 @@ function useNewRepository(
         password: formData.password,
         repo_fullname: repoFullName,
       });
-      return fetch(`/api/dashboard/repository/new?${params.toString()}`, {
-        method: "POST",
-      })
+      return createNewRepository(params)
         .then((r) => {
           if (r.status === 201 || r.status === 200) {
             setDialogOpen(false);

@@ -4,12 +4,12 @@ import {
   useLoaderData,
   useSearch,
 } from "@tanstack/react-router";
-import { Breadcrumbs } from "../../../components/Breadcrumbs";
-import type { Status } from "../../../types/API";
+import { Breadcrumbs } from "../../../components/common/Breadcrumbs";
 import { NewVault } from "../../../components/dashboard/repository/NewVaultForm";
 import { useState } from "react";
 import { Button } from "@mui/material";
 import { useNotifications } from "@toolpad/core/useNotifications";
+import { getRepositoryByIDWithOwnerValidation } from "../../../services/repository";
 
 type SearchParams = {
   repo: string;
@@ -20,7 +20,10 @@ export const Route = createFileRoute("/dashboard/repository/$repoID")({
   loader: async ({ params }) => {
     const search = new URLSearchParams(window.location.search);
     const repoFullName = search.get("repo") as string;
-    const r = await fetchRepoData(parseInt(params.repoID), repoFullName);
+    const r = await getRepositoryByIDWithOwnerValidation(
+      parseInt(params.repoID),
+      repoFullName,
+    );
     return r;
   },
   validateSearch: (search: Record<string, unknown>): SearchParams => {
@@ -28,17 +31,6 @@ export const Route = createFileRoute("/dashboard/repository/$repoID")({
     return { repo };
   },
 });
-
-// TODO:This will need to be moved to a service file during refactor
-async function fetchRepoData(
-  repoID: number,
-  repoFullName: string,
-): Promise<Status> {
-  const r = await fetch(
-    `/api/dashboard/repository/${repoID}?repo=${repoFullName}`,
-  );
-  return { id: repoID, status: r.status };
-}
 
 function RouteComponent() {
   const notifications = useNotifications();
@@ -50,6 +42,16 @@ function RouteComponent() {
   const [newVaultDialogOpen, setNewVaultDialogOpen] = useState(
     repoID.status === 404,
   );
+
+  if (repoID.status === 403) {
+    notifications.show(
+      "You are not authorized to create a vault for this repository.",
+      {
+        severity: "error",
+        autoHideDuration: 3000,
+      },
+    );
+  }
 
   if (repoID.status === 403) {
     notifications.show(
