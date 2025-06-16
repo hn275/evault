@@ -49,7 +49,7 @@ export function useAuthGithub() {
       setError("Something went wrong.");
       console.error(queryError);
     }
-  }, [nav, status, error]);
+  }, [nav, status, error, params.error, queryError]);
 
   return { loading, status, error };
 }
