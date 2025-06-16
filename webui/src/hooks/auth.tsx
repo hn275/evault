@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { paramParser } from "../utils/zod/gitHubParams";
 import type { User } from "../types/User";
 import { getGitHubAuth, getUser } from "../services/auth";
+import { useQuery } from "@tanstack/react-query";
 
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
@@ -19,39 +19,37 @@ export function useUser() {
 }
 
 export function useAuthGithub() {
-  const param = useSearch({ from: "/auth/github" });
+  const params = useSearch({ from: "/auth/github" });
   const nav = useNavigate();
-  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const {
+    isPending: loading,
+    error: queryError,
+    status,
+  } = useQuery({
+    queryKey: ["githubauth"],
+
+    // NOTE: fine to coerce the type here, since the prop `enabled` will stop
+    // the `queryClient` from issuing a request if `params.error` is set.
+    queryFn: () => getGitHubAuth(params.data!),
+    enabled: params.error === undefined,
+    retry: 0,
+  });
+
   useEffect(() => {
-    const { data: searchParam, error: searchParamError } =
-      paramParser.safeParse(param);
-
-    if (searchParamError) {
-      setError("Invalid authentication parameters.");
-      console.error(searchParamError.message);
-      setLoading(false);
-      return;
+    if (params.error) {
+      setError("Invalid parameters provided for GitHub authentication.");
+      console.error(params.error);
+    } else if (status === "success") {
+      // TODO: set the CSRF token for a global axios instance
+      // (not yet impolemented, see #14)
+      nav({ to: "/dashboard" });
+    } else if (status === "error") {
+      setError("Something went wrong.");
+      console.error(queryError);
     }
+  }, [nav, status, error]);
 
-    const p = new URLSearchParams(searchParam);
-
-    (async () => {
-      try {
-        await getGitHubAuth(p);
-
-        if (searchParam.device_type === "web") {
-          nav({ to: "/dashboard" });
-        }
-      } catch (e) {
-        setError("Something went wrong.");
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [nav, param]);
-
-  return { loading, error };
+  return { loading, status, error };
 }
