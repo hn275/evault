@@ -1,5 +1,4 @@
 from dataclasses import asdict
-
 from fastapi.encoders import jsonable_encoder
 from .config import db, app, redis, EVAULT_SESSION_TOKEN_TTL, httpclient
 from typing import Optional
@@ -7,8 +6,10 @@ from fastapi.routing import APIRouter
 from fastapi import Depends, HTTPException, Cookie
 from fastapi.responses import JSONResponse, Response
 from argon2.profiles import RFC_9106_LOW_MEMORY
+from starlette.status import HTTP_400_BAD_REQUEST
 from argon2 import PasswordHasher
 import secrets
+from .validators import valid_user_repo_string
 
 
 def auth_middleware(evault_access_token: Optional[str] = Cookie(None)) -> str:
@@ -65,6 +66,11 @@ def get_user_repositories(evault_access_token: str = Depends(auth_middleware)):
 def get_repository(
     repo_id: int, repo: str, evault_access_token: str = Depends(auth_middleware)
 ):
+    if not valid_user_repo_string(repo):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail="Invalid repository format."
+        )
+
     db_repo = db.get_repository(repo_id)
 
     # if repo is provided, we need to check for ownership
@@ -101,7 +107,11 @@ def create_new_repository(
     repo_fullname: str,
     evault_access_token: str = Depends(auth_middleware),
 ):
-    # TODO: sanitize repo_fullname
+    if not valid_user_repo_string(repo_fullname):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail="Invalid repository format."
+        )
+
     [owner, repo_name] = repo_fullname.split("/")
 
     d = redis.get_user_session(evault_access_token)
