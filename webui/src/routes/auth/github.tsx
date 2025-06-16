@@ -28,7 +28,7 @@ function RouteComponent() {
   const f = useAuthGithub();
   const { index } = useLoadingText(TEXT_CHANGE_INTERVAL);
 
-  return f.status === "pending" || true ? (
+  return f.status === "pending" ? (
     <Stack
       gap={4}
       mt="30vh"
@@ -82,7 +82,7 @@ function useLoadingText(changeInterval: number) {
       setIndex(nextIndex);
     }, changeInterval);
     return () => clearInterval(intervalID);
-  }, [lineCtr]);
+  }, [lineCtr, changeInterval]);
 
   return { index };
 }
