@@ -6,3 +6,8 @@ export const paramParser = z.object({
   code: z.string(),
   state: z.string(),
 });
+
+export type GitHubOAuthSearchParams = z.infer<typeof paramParser>;
+
+export type GitHubOAuthSearchParamResult =
+  z.ZodSafeParseResult<GitHubOAuthSearchParams>;
