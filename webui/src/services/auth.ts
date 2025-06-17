@@ -1,17 +1,18 @@
 import type { User } from "../types/User";
-import type { GitHubOAuthSearchParams } from "../utils/zod/gitHubParams";
-import { fetchWithRedirect } from "./common";
+import { httpClient } from "../utils/axios";
 
 // Fetch the user's information from the API
 export async function getUser(): Promise<User> {
-  const r = await fetchWithRedirect("/api/dashboard/user");
-  return (await r.json()) as User;
+  const r = await httpClient.get("/api/dashboard/user", {
+    transformResponse: (data) => {
+      // TODO: adding zod type validation
+      return data;
+    },
+  });
+  return r.data;
 }
 
 // Exchange the GitHub authentication
-export function getGitHubAuth(
-  params: GitHubOAuthSearchParams,
-): Promise<Response> {
-  const p = new URLSearchParams(params);
-  return fetch(`/api/auth/token?${p.toString()}`);
+export async function getGitHubAuth(p: URLSearchParams) {
+  return httpClient.get(`/api/auth/token?${p.toString()}`);
 }
