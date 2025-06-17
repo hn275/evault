@@ -76,16 +76,15 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     # store a (new) session: github user to cache
     # create an evault access token, then cache it
     evault_access_token = secrets.token_urlsafe(32)
+
     user_session = UserSession(device_type, gh_user, gh_token)
     redis.create_user_session(
         evault_access_token, user_session, EVAULT_SESSION_TOKEN_TTL
     )
-    # check if user exists in database
-    gh_user.email = "N/A" if gh_user.email == None else gh_user.email
-    user = db.get_user(gh_user.id)
-    if user == None:
-        # create new user
-        db.create_new_user(gh_user.id, gh_user.login, gh_user.name, gh_user.email)
+
+    db.create_or_update_user(
+        user_id=gh_user.id, login=gh_user.login, name=gh_user.name, email=gh_user.email
+    )
 
     response = fastapi.Response(status_code=HTTP_200_OK)
     if device_type == "web":

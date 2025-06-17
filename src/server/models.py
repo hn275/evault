@@ -13,7 +13,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     login: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    email: Mapped[str] = mapped_column(String(255), default="N/A")
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=True)
 
     # Relationships
     repositories = relationship(
@@ -25,9 +25,6 @@ class User(Base):
     versions_created = relationship(
         "Version", back_populates="creator", cascade="all, delete-orphan"
     )
-
-    def __repr__(self) -> str:
-        return f"User(id={self.id!r}, login={self.login!r})"
 
 
 class Repository(Base):
@@ -59,7 +56,6 @@ class Version(Base):
     file_id: Mapped[str] = mapped_column(String(255), nullable=False)
     s3_id: Mapped[str] = mapped_column(String(255), nullable=False)
     version_number: Mapped[int] = mapped_column(default=1)
-    stage: Mapped[str] = mapped_column(String(50), nullable=False)
     change_description: Mapped[str] = mapped_column(String(1000))
     repository_id: Mapped[int] = mapped_column(
         ForeignKey("repositories.id"), nullable=False
@@ -73,19 +69,14 @@ class Version(Base):
     # Relationships
     repository = relationship("Repository", back_populates="versions")
     creator = relationship("User", back_populates="versions_created")
-    envs = relationship("Env", back_populates="version", cascade="all, delete-orphan")
-
-    def __repr__(self) -> str:
-        return f"Version(id={self.id!r}, version_number={self.version_number!r})"
 
 
 class Env(Base):
     __tablename__ = "envs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    key: Mapped[str] = mapped_column(String(255), nullable=False)
     value: Mapped[str] = mapped_column(String(1000), nullable=False)
-    version_id: Mapped[int] = mapped_column(ForeignKey("versions.id"), nullable=False)
     stage: Mapped[str] = mapped_column(String(50), nullable=False)
     repository_id: Mapped[int] = mapped_column(
         ForeignKey("repositories.id"), nullable=False
@@ -96,9 +87,5 @@ class Env(Base):
     )
 
     # Relationships
-    version = relationship("Version", back_populates="envs")
     repository = relationship("Repository", back_populates="envs")
     creator = relationship("User", back_populates="env_created")
-
-    def __repr__(self) -> str:
-        return f"Env(id={self.id!r}, name={self.name!r})"

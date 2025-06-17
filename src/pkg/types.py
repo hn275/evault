@@ -26,7 +26,7 @@ class GitHubUser:
     name: str
     login: str
     type: str
-    email: str
+    email: str | None
     avatar_url: str
 
 

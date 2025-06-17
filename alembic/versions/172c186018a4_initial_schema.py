@@ -1,8 +1,8 @@
 """Initial schema
 
-Revision ID: 5a1fada2e223
+Revision ID: 172c186018a4
 Revises: dbba5d52c8d9
-Create Date: 2025-06-15 11:35:51.379087
+Create Date: 2025-06-16 17:18:53.268648
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "5a1fada2e223"
+revision: str = "172c186018a4"
 down_revision: Union[str, None] = "dbba5d52c8d9"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,9 +27,29 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("login", sa.String(length=255), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),
-        sa.Column("email", sa.String(length=255), nullable=False),
+        sa.Column("email", sa.String(length=255), nullable=True),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("email"),
         sa.UniqueConstraint("login"),
+    )
+    op.create_table(
+        "envs",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("key", sa.String(length=255), nullable=False),
+        sa.Column("value", sa.String(length=1000), nullable=False),
+        sa.Column("stage", sa.String(length=50), nullable=False),
+        sa.Column("repository_id", sa.Integer(), nullable=False),
+        sa.Column("created_by", sa.Integer(), nullable=False),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["created_by"],
+            ["users.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["repository_id"],
+            ["repositories.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
         "versions",
@@ -37,33 +57,19 @@ def upgrade() -> None:
         sa.Column("file_id", sa.String(length=255), nullable=False),
         sa.Column("s3_id", sa.String(length=255), nullable=False),
         sa.Column("version_number", sa.Integer(), nullable=False),
-        sa.Column("stage", sa.String(length=50), nullable=False),
         sa.Column("change_description", sa.String(length=1000), nullable=False),
         sa.Column("repository_id", sa.Integer(), nullable=False),
         sa.Column("created_by", sa.Integer(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("checksum", sa.String(length=64), nullable=False),
-        sa.ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
-            ["repository_id"], ["repositories.id"], ondelete="CASCADE"
+            ["created_by"],
+            ["users.id"],
         ),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_table(
-        "envs",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("name", sa.String(length=255), nullable=False),
-        sa.Column("value", sa.String(length=1000), nullable=False),
-        sa.Column("version_id", sa.Integer(), nullable=False),
-        sa.Column("stage", sa.String(length=50), nullable=False),
-        sa.Column("repository_id", sa.Integer(), nullable=False),
-        sa.Column("created_by", sa.Integer(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
-            ["repository_id"], ["repositories.id"], ondelete="CASCADE"
+            ["repository_id"],
+            ["repositories.id"],
         ),
-        sa.ForeignKeyConstraint(["version_id"], ["versions.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.add_column(
@@ -73,12 +79,7 @@ def upgrade() -> None:
         "repositories", sa.Column("bucket_addr", sa.String(length=255), nullable=False)
     )
     op.create_foreign_key(
-        "repositories_owner_id_fkey",
-        "repositories",
-        "users",
-        ["owner_id"],
-        ["id"],
-        ondelete="CASCADE",
+        "repositories_owner_id_fkey", "repositories", "users", ["owner_id"], ["id"]
     )
     # ### end Alembic commands ###
 
@@ -89,7 +90,7 @@ def downgrade() -> None:
     op.drop_constraint("repositories_owner_id_fkey", "repositories", type_="foreignkey")
     op.drop_column("repositories", "bucket_addr")
     op.drop_column("repositories", "name")
-    op.drop_table("envs")
     op.drop_table("versions")
+    op.drop_table("envs")
     op.drop_table("users")
     # ### end Alembic commands ###

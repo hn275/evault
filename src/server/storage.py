@@ -4,6 +4,7 @@ from fastapi import HTTPException
 import sqlalchemy as sql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert
 from .models import Repository, User
 from ..pkg.types import UserSession
 
@@ -53,19 +54,21 @@ class Database:
                     detail="Repository exists.",
                 )
 
-    def create_new_user(self, user_id: int, login: str, name: str, email: str):
-        user = User(id=user_id, login=login, name=name, email=email)
+    def create_or_update_user(self, user_id: int, login: str, name: str, email: str):
+        stmt = (
+            insert(User)
+            .values(id=user_id, login=login, name=name, email=email)
+            .on_conflict_do_update(
+                constraint="users_pkey",
+                set_=dict(login=login, name=name, email=email),
+            )
+            .returning(User)
+        )
 
         with Session(self.engine) as s:
-            try:
-                s.add(user)
-                s.commit()
-                s.refresh(user)
-            except IntegrityError:
-                raise HTTPException(
-                    status_code=400,
-                    detail="User exists.",
-                )
+            result = s.execute(stmt)
+            s.commit()
+            return result.scalar_one()
 
     def get_user(self, user_id: int) -> Optional[User]:
         with Session(self.engine) as s:
