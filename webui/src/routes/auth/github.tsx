@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   paramParser,
@@ -8,6 +7,7 @@ import { useAuthGithub } from "../../hooks/auth";
 import { CircularProgress, Link, Stack, Typography } from "@mui/material";
 import { AnimatePresence, motion } from "motion/react";
 import { Link as RouterLink } from "@tanstack/react-router";
+import { useLoadingText } from "../../hooks/loadingText";
 
 const TEXT_CHANGE_INTERVAL = 3000; // milliseconds
 const loadingTexts = [
@@ -26,9 +26,32 @@ export const Route = createFileRoute("/auth/github")({
 
 function RouteComponent() {
   const f = useAuthGithub();
-  const { index } = useLoadingText(TEXT_CHANGE_INTERVAL);
 
-  return f.status === "pending" ? (
+  switch (f.status) {
+    case "pending":
+      return <LoadingState />;
+    case "error":
+      return <ErrorState />;
+    default: // case "success", should be redirected to `/dashboard`
+      return <></>;
+  }
+}
+
+function ErrorState() {
+  return (
+    <Stack mt="30vh" mx="auto" width="max-content" alignItems="center" gap={1}>
+      <Typography variant="h4">Authentication Failed</Typography>
+      <Link component={RouterLink} to="/">
+        Go back home.
+      </Link>
+    </Stack>
+  );
+}
+
+function LoadingState() {
+  const { index } = useLoadingText(TEXT_CHANGE_INTERVAL, loadingTexts);
+
+  return (
     <Stack
       gap={4}
       mt="30vh"
@@ -60,29 +83,5 @@ function RouteComponent() {
         </AnimatePresence>
       </Stack>
     </Stack>
-  ) : f.status === "error" ? (
-    <Stack mt="30vh" mx="auto" width="max-content" alignItems="center" gap={1}>
-      <Typography variant="h4">Authentication Failed</Typography>
-      <Link component={RouterLink} to="/">
-        Go back home.
-      </Link>
-    </Stack>
-  ) : (
-    <></>
   );
-}
-
-function useLoadingText(changeInterval: number) {
-  const lineCtr = loadingTexts.length;
-  const [index, setIndex] = useState(Math.floor(Math.random() * lineCtr));
-
-  useEffect(() => {
-    const intervalID = setInterval(() => {
-      const nextIndex = Math.floor(Math.random() * lineCtr);
-      setIndex(nextIndex);
-    }, changeInterval);
-    return () => clearInterval(intervalID);
-  }, [lineCtr, changeInterval]);
-
-  return { index };
 }
