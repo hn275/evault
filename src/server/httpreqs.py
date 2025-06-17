@@ -3,8 +3,8 @@ import dacite
 from typing import Dict, List, Optional, Tuple
 from fastapi import HTTPException
 import requests
-from requests.sessions import HTTPAdapter
-from ..pkg.types import GitHubUser
+from starlette.status import HTTP_200_OK
+from ..pkg.types import GitHubUser, GithubAuthToken
 
 
 @dataclass
@@ -40,26 +40,28 @@ class HttpClient(requests.Session):
         r = self.get(
             url, headers=headers, params={"sort": "pushed", "direction": "desc"}
         )
-        assert r.status_code == 200
+        assert r.status_code == HTTP_200_OK
 
         repos_data = r.json()
         return [dacite.from_dict(Repository, repo_data) for repo_data in repos_data]
 
     def fetch_github_credentials(
-        self, token_type: str, access_token: str
+        self, token: GithubAuthToken
     ) -> Tuple[GitHubUser, Optional[str]]:
-        """returns None if token is expired"""
-        # get user information
+        """
+        returns a tuple of `GitHubUser` and an optional user email
+        raises `HTTPException` if the network call fails.
+        """
         url = f"https://api.github.com/user"
-        headers = self._make_header(token_type, access_token)
+        headers = self._make_header(token.token_type, token.access_token)
 
         req = self.get(url, headers=headers)
-        if req.status_code != 200:
+        if req.status_code != HTTP_200_OK:
             # TODO: add logging
             print(f"Failed to fetch user data: {req.status_code} {req.text}")
             raise HTTPException(
                 req.status_code,
-                "failed to retrieve user's data from GitHub.",
+                "Failed to retrieve user's data from GitHub.",
             )
 
         data = req.json()
@@ -77,7 +79,7 @@ class HttpClient(requests.Session):
         url = f"{self.base_url}/repos/{repo_owner}/{repo_name}"
         headers = self._make_header(token_type, access_token)
         r = self.get(url, headers=headers)
-        assert r.status_code == 200
+        assert r.status_code == HTTP_200_OK
         return dacite.from_dict(Repository, r.json())
 
     def _make_header(

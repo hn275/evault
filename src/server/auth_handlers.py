@@ -67,11 +67,7 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     gh_token = GithubAuthToken(**r.json())
 
     # get user information
-    gh_user, user_email = httpclient.fetch_github_credentials(
-        gh_token.token_type, gh_token.access_token
-    )
-    if gh_user == None:
-        return PlainTextResponse(content="Failed to fetch user data.", status_code=401)
+    gh_user, user_email = httpclient.fetch_github_credentials(gh_token)
 
     # store a (new) session: github user to cache
     # create an evault access token, then cache it
