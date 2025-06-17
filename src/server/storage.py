@@ -54,7 +54,9 @@ class Database:
                     detail="Repository exists.",
                 )
 
-    def create_or_update_user(self, user_id: int, login: str, name: str, email: str):
+    def create_or_update_user(
+        self, user_id: int, login: str, name: str, email: Optional[str]
+    ):
         stmt = (
             insert(User)
             .values(id=user_id, login=login, name=name, email=email)

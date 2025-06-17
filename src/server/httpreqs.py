@@ -1,7 +1,9 @@
 from dataclasses import dataclass
-import json, dacite
-from typing import Dict, List, Optional
+import dacite
+from typing import Dict, List, Optional, Tuple
+from fastapi import HTTPException
 import requests
+from requests.sessions import HTTPAdapter
 from ..pkg.types import GitHubUser
 
 
@@ -45,7 +47,7 @@ class HttpClient(requests.Session):
 
     def fetch_github_credentials(
         self, token_type: str, access_token: str
-    ) -> Optional[GitHubUser]:
+    ) -> Tuple[GitHubUser, Optional[str]]:
         """returns None if token is expired"""
         # get user information
         url = f"https://api.github.com/user"
@@ -53,11 +55,17 @@ class HttpClient(requests.Session):
 
         req = self.get(url, headers=headers)
         if req.status_code != 200:
-            return None
+            # TODO: add logging
+            print(f"Failed to fetch user data: {req.status_code} {req.text}")
+            raise HTTPException(
+                req.status_code,
+                "failed to retrieve user's data from GitHub.",
+            )
 
         data = req.json()
+        user_email: str | None = data.get("email")
 
-        return dacite.from_dict(GitHubUser, data)
+        return (dacite.from_dict(GitHubUser, data), user_email)
 
     def fetch_repository(
         self,

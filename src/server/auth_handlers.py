@@ -67,7 +67,7 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     gh_token = GithubAuthToken(**r.json())
 
     # get user information
-    gh_user = httpclient.fetch_github_credentials(
+    gh_user, user_email = httpclient.fetch_github_credentials(
         gh_token.token_type, gh_token.access_token
     )
     if gh_user == None:
@@ -83,7 +83,7 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     )
 
     db.create_or_update_user(
-        user_id=gh_user.id, login=gh_user.login, name=gh_user.name, email=gh_user.email
+        user_id=gh_user.id, login=gh_user.login, name=gh_user.name, email=user_email
     )
 
     response = fastapi.Response(status_code=HTTP_200_OK)
