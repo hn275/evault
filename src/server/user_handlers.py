@@ -133,7 +133,7 @@ def create_new_repository(
     )
 
     db.create_new_repository(
-        repo_id, repository.owner.id, digest, repository.full_name, "BUCKET PLACEHOLDER"
+        repo_id, repository.owner.id, digest, repository.full_name, None
     )
     return Response(status_code=201)
 
