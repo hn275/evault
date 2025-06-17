@@ -45,9 +45,6 @@ class Repository(Base):
         "Version", back_populates="repository", cascade="all, delete-orphan"
     )
 
-    def __repr__(self) -> str:
-        return f"Repository(id={self.id!r}, name={self.name!r})"
-
 
 class Version(Base):
     __tablename__ = "versions"
