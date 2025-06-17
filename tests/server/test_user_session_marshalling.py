@@ -4,7 +4,6 @@ from copy import deepcopy
 flat_map = {
     "device_type": "web",
     "user.id": 1,
-    "user.email": "test@example.com",
     "user.name": "Test User 1",
     "user.avatar_url": "",
     "user.login": "testuser1",
@@ -16,7 +15,6 @@ flat_map = {
 
 test_user = GitHubUser(
     id=1,
-    email="test@example.com",
     name="Test User 1",
     avatar_url="",
     login="testuser1",

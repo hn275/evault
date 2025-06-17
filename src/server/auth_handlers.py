@@ -4,6 +4,7 @@ from fastapi import status
 from starlette.status import HTTP_200_OK
 from ..pkg.types import DeviceType, GithubAuthToken
 from .config import (
+    db,
     app,
     redis,
     httpclient,
@@ -66,19 +67,19 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     gh_token = GithubAuthToken(**r.json())
 
     # get user information
-    gh_user = httpclient.fetch_github_credentials(
-        gh_token.token_type, gh_token.access_token
-    )
-    if gh_user == None:
-        return PlainTextResponse(content="Failed to fetch user data.", status_code=401)
+    gh_user, user_email = httpclient.fetch_github_credentials(gh_token)
 
-    # TODO: store user in database?
     # store a (new) session: github user to cache
     # create an evault access token, then cache it
     evault_access_token = secrets.token_urlsafe(32)
+
     user_session = UserSession(device_type, gh_user, gh_token)
     redis.create_user_session(
         evault_access_token, user_session, EVAULT_SESSION_TOKEN_TTL
+    )
+
+    db.create_or_update_user(
+        user_id=gh_user.id, login=gh_user.login, name=gh_user.name, email=user_email
     )
 
     response = fastapi.Response(status_code=HTTP_200_OK)
