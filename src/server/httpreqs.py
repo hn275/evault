@@ -56,7 +56,7 @@ class HttpClient(requests.Session):
             return None
 
         data = req.json()
-        
+
         return dacite.from_dict(GitHubUser, data)
 
     def fetch_repository(
