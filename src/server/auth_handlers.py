@@ -71,9 +71,11 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
 
     # store a (new) session: github user to cache
     # create an evault access token, then cache it
-    evault_access_token = secrets.token_urlsafe(32)
-
     user_session = UserSession(device_type, gh_user, gh_token)
+    if device_type == "web":
+        user_session.csrf_token = secrets.token_hex(32)
+
+    evault_access_token = secrets.token_urlsafe(32)
     redis.create_user_session(
         evault_access_token, user_session, EVAULT_SESSION_TOKEN_TTL
     )
@@ -82,15 +84,20 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
         user_id=gh_user.id, login=gh_user.login, name=gh_user.name, email=user_email
     )
 
-    response = fastapi.Response(status_code=HTTP_200_OK)
-    if device_type == "web":
+    response: fastapi.Response
+    if device_type == "cli":
+        redis.cache_token_poll(session_id, evault_access_token, EVAULT_TOKEN_POLL_TTL)
+        response = fastapi.Response(status_code=HTTP_200_OK)
+    else:  # for web, set the cookie + transmit a session csrf token
+        response = PlainTextResponse(
+            status_code=HTTP_200_OK,
+            content=user_session.csrf_token,
+        )
         response.set_cookie(
             key="evault_access_token",
             value=evault_access_token,
             expires=EVAULT_SESSION_TOKEN_TTL,
         )
-    else:
-        redis.cache_token_poll(session_id, evault_access_token, EVAULT_TOKEN_POLL_TTL)
 
     return response
 
