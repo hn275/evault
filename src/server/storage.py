@@ -33,7 +33,12 @@ class Database:
             return s.get(Repository, repo_id)
 
     def create_new_repository(
-        self, repo_id: int, owner_id: int, digest: str, name: str, bucket_addr: str
+        self,
+        repo_id: int,
+        owner_id: int,
+        digest: str,
+        name: str,
+        bucket_addr: str | None,
     ):
         repo = Repository(
             id=repo_id,
