@@ -119,7 +119,7 @@ def fetch_repository(
         logger.error("Failed to fetch repository from GitHub:", r.text())
         raise HTTPException(
             status_code=r.status_code,
-            content="Failed to fetch repository from GitHub.",
+            detail="Failed to fetch repository from GitHub.",
         )
 
     return dacite.from_dict(Repository, r.json())

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from . import dashboard, auth, user
 from loguru import logger
+from . import dashboard, auth, user
 
 
 mux = FastAPI()

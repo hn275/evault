@@ -69,7 +69,7 @@ def get_auth_url(session_id: str) -> str:
     if not t:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            content="Login link expired.",
+            detail="Login link expired.",
         )
 
     return t.decode()
