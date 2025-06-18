@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import {
   paramParser,
   type GitHubOAuthSearchParamResult,
@@ -32,8 +32,8 @@ function RouteComponent() {
       return <LoadingState />;
     case "error":
       return <ErrorState />;
-    default: // case "success", should be redirected to `/dashboard`
-      return <></>;
+    default:
+      return <Navigate to="/dashboard" />;
   }
 }
 
