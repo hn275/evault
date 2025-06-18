@@ -4,7 +4,7 @@ import { fetchWithRedirect } from "./common";
 
 // Fetch the user's information from the API
 export async function getUser(): Promise<User> {
-  const r = await fetchWithRedirect("/api/dashboard/user");
+  const r = await fetchWithRedirect("/api/github/user");
   return (await r.json()) as User;
 }
 
@@ -13,5 +13,5 @@ export function getGitHubAuth(
   params: GitHubOAuthSearchParams,
 ): Promise<Response> {
   const p = new URLSearchParams(params);
-  return fetch(`/api/auth/token?${p.toString()}`);
+  return fetch(`/api/github/auth/token?${p.toString()}`);
 }

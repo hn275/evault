@@ -1,47 +1,31 @@
 from dataclasses import asdict
-from fastapi.encoders import jsonable_encoder
-from .config import db, app, redis, EVAULT_SESSION_TOKEN_TTL, httpclient
-from typing import Optional
+from fastapi.responses import JSONResponse
+from evault.src.server.config import redis, httpclient, db
+from evault.src.server.validators import valid_user_repo_string
+from evault.src.server.middlewares.auth import access_token_extractor
 from fastapi.routing import APIRouter
-from fastapi import Depends, HTTPException, Cookie
+from fastapi import Depends, HTTPException
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, Response
 from argon2.profiles import RFC_9106_LOW_MEMORY
-from starlette.status import HTTP_400_BAD_REQUEST
+from starlette.status import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_400_BAD_REQUEST,
+    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
+)
 from argon2 import PasswordHasher
 import secrets
-from .validators import valid_user_repo_string
 
 
-def auth_middleware(evault_access_token: Optional[str] = Cookie(None)) -> str:
-    if evault_access_token == None:
-        raise HTTPException(
-            status_code=403,
-            detail="Access token not found/expired.",
-        )
-
-    # extend the session
-    redis.renew_user_session(
-        evault_access_token,
-        EVAULT_SESSION_TOKEN_TTL,
-    )
-
-    return evault_access_token
-
-
-dashboard_router = APIRouter(
-    prefix="/api/dashboard", dependencies=[Depends(auth_middleware)]
+router = APIRouter(
+    prefix="/api/github/dashboard", dependencies=[Depends(access_token_extractor)]
 )
 
 
-@dashboard_router.get("/user")
-def get_user_information(evault_access_token: str = Depends(auth_middleware)):
-    d = redis.get_user_session(evault_access_token)
-    assert d != None
-    return JSONResponse(content=asdict(d.user))
-
-
-@dashboard_router.get("/repositories")
-def get_user_repositories(evault_access_token: str = Depends(auth_middleware)):
+@router.get("/repositories")
+def get_user_repositories(evault_access_token: str = Depends(access_token_extractor)):
     user = redis.get_user_session(evault_access_token)
     assert user != None
 
@@ -56,15 +40,15 @@ def get_user_repositories(evault_access_token: str = Depends(auth_middleware)):
     }
 
     return JSONResponse(
-        status_code=200,
+        status_code=HTTP_200_OK,
         content=body,
         headers=headers,
     )
 
 
-@dashboard_router.get("/repository/{repo_id}")
+@router.get("/repository/{repo_id}")
 def get_repository(
-    repo_id: int, repo: str, evault_access_token: str = Depends(auth_middleware)
+    repo_id: int, repo: str, evault_access_token: str = Depends(access_token_extractor)
 ):
     if not valid_user_repo_string(repo):
         raise HTTPException(
@@ -88,24 +72,28 @@ def get_repository(
         )
 
         if d.user.id != remote_repository.owner.id:
-            raise HTTPException(status_code=403, detail="Not repository owner.")
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN, detail="Not repository owner."
+            )
 
     # if the code reaches here, user is owner
     if db_repo is None:
-        raise HTTPException(status_code=404, detail="Repository not found.")
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND, detail="Repository not found."
+        )
 
     return JSONResponse(
-        status_code=200,
+        status_code=HTTP_200_OK,
         content=jsonable_encoder(db_repo),
     )
 
 
-@dashboard_router.post("/repository/new")
+@router.post("/repository/new")
 def create_new_repository(
     repo_id: int,
     password: str,
     repo_fullname: str,
-    evault_access_token: str = Depends(auth_middleware),
+    evault_access_token: str = Depends(access_token_extractor),
 ):
     if not valid_user_repo_string(repo_fullname):
         raise HTTPException(
@@ -135,7 +123,4 @@ def create_new_repository(
     db.create_new_repository(
         repo_id, repository.owner.id, digest, repository.full_name, None
     )
-    return Response(status_code=201)
-
-
-app.include_router(dashboard_router)
+    return Response(status_code=HTTP_201_CREATED)
