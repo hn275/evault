@@ -12,7 +12,7 @@ def derive_repo_key(
     repo_password: str,
     key_len: int = KEY_LENGTH,
 ) -> bytes:
-    int64_bytelen = 8  # 64 bits integer
+    int64_bytelen = 8  # 8 bytes == 64 bits integer
     key_material = (
         server_secret
         + repo_id.to_bytes(int64_bytelen, sys.byteorder)

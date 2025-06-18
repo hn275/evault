@@ -1,1 +1,1 @@
-from .handlers.router import *
+from src.server.handlers.router import *

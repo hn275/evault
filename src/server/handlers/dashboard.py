@@ -6,10 +6,9 @@ from fastapi.encoders import jsonable_encoder
 from src.server import cache as cache, database as db
 from src.server.github import client as httpclient
 from fastapi.routing import APIRouter
-from argon2.profiles import RFC_9106_LOW_MEMORY
-from argon2 import PasswordHasher
 from src.server.validators import valid_user_repo_string
 from src.server.middlewares.auth import access_token_extractor
+from src.server.crypto import passwordhash
 
 
 router = APIRouter(
@@ -94,6 +93,7 @@ def create_new_repository(
     repo_fullname: str,
     evault_access_token: str = Depends(access_token_extractor),
 ):
+    # TODO: sanitize password
     if not valid_user_repo_string(repo_fullname):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -117,12 +117,18 @@ def create_new_repository(
             detail="Not repository owner.",
         )
 
-    digest = PasswordHasher.from_parameters(RFC_9106_LOW_MEMORY).hash(
-        password,
-        salt=secrets.token_bytes(32),
-    )
+    if repo_fullname != repository.full_name:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid repository.",
+        )
 
+    digest = passwordhash.hash(password)
     db.create_new_repository(
-        repo_id, repository.owner.id, digest, repository.full_name, None
+        repo_id=repo_id,
+        owner_id=repository.owner.id,
+        repo_password=digest,
+        name=repository.full_name,
+        bucket_addr=None,
     )
     return Response(status_code=status.HTTP_201_CREATED)
