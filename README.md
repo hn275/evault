@@ -8,10 +8,6 @@
 Install all project deps.
 
 ```sh
-# NOTE: if running into importing issue, install the project as a module on
-# your machine
-pip install -e .
-
 # install all deps
 pip install -r requirements.txt
 ```
@@ -32,14 +28,9 @@ There's a Docker Compose `compose.yml` file for Redis + PostGreSQL server.
 Mapping to the ports 5432 and 6379 respectively.
 
 ```sh
-docker compose up
+docker compose up -d
 ```
 
 # Documentations
 
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [Alembic](https://alembic.sqlalchemy.org/en/latest/index.html) - database migration
-- [Alchemy](https://docs.sqlalchemy.org/en/20/orm/quickstart.html) - ORM (comes with Alembic)
-- [PyCryptodome](https://pycryptodome.readthedocs.io/en/latest/src/cipher/chacha20_poly1305.html) for XChaCha20-Poly1305
-- [redis-py](https://redis.readthedocs.io/en/stable/index.html)
 - [GitHub REST API](https://docs.github.com/en/rest/repos?apiVersion=2022-11-28)
