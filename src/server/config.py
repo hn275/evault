@@ -44,17 +44,6 @@ db = Database(
     ssl=PSQL_SSLMODE,
 )
 
-app = FastAPI()
-app.add_middleware(
-    # TODO: configure this for prod
-    CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods (GET, POST, PUT, DELETE, etc.)
-    allow_headers=["*"],  # Allows all headers
-)
-
-
 httpclient = HttpClient()
 
 
