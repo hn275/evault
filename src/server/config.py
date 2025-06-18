@@ -1,10 +1,6 @@
-import dotenv, os
-from ..pkg.utils import env_or_default
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
-from .storage import Redis, Database
-from .httpreqs import HttpClient
-from .oauth import GitHubOauth
+import dotenv
+import os
+from src.pkg.utils import env_or_default
 
 dotenv.load_dotenv()
 
@@ -21,6 +17,7 @@ EVAULT_SESSION_TOKEN_TTL = (
 EVAULT_WEB_URL = env_or_default("EVAULT_WEB_URL", "http://localhost:5173")
 EVAULT_TOKEN_POLL_TTL = 30
 EVAULT_TOKEN_POLL_MAX_ATTEMPT = 10
+EVAULT_DEBUG: bool = env_or_default("EVAULT_DEBUG", "0").lower() == "1"
 
 REDIS_HOST = env_or_default("REDIS_HOST", "localhost")
 REDIS_PORT_DEFAULT = 6379
@@ -32,23 +29,3 @@ PSQL_PORT = env_or_default("POSTGRES_PORT", "5432")
 PSQL_DBNAME = os.environ["POSTGRES_DBNAME"]
 PSQL_SSLMODE = env_or_default("POSTGRES_SSL", "require")
 assert PSQL_SSLMODE == "require" or PSQL_SSLMODE == "disable"
-
-redis = Redis(REDIS_HOST, port=REDIS_PORT_DEFAULT)
-
-db = Database(
-    user=PSQL_USER,
-    password=PSQL_PASSWORD,
-    host=PSQL_HOST,
-    port=int(PSQL_PORT),
-    db=PSQL_DBNAME,
-    ssl=PSQL_SSLMODE,
-)
-
-httpclient = HttpClient()
-
-
-oauth_client = GitHubOauth(
-    client_id=GITHUB_OAUTH_CLIENT_ID,
-    client_secret=GITHUB_OAUTH_CLIENT_SECRET,
-    redirect_uri=GITHUB_OAUTH_REDIRECT_URI,
-)
