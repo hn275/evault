@@ -36,14 +36,14 @@ def get_repository(repo_id: int) -> Repository | None:
 def create_new_repository(
     repo_id: int,
     owner_id: int,
-    digest: str,
+    repo_password: str,
     name: str,
     bucket_addr: str | None,
 ):
     repo = Repository(
         id=repo_id,
         owner_id=owner_id,
-        password=digest,
+        password=repo_password,
         name=name,
         bucket_addr=bucket_addr,
     )
