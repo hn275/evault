@@ -1,7 +1,7 @@
-import fastapi
-import urllib.parse as urlparse
 import json
 import secrets
+import urllib.parse as urlparse
+import fastapi
 from fastapi.routing import APIRouter
 from fastapi.requests import Request
 from fastapi.responses import (
@@ -148,13 +148,12 @@ async def auth_poll(session_id: str, req: fastapi.Request):
             content={"status": "abort", "error": "Max attempt exceeded."},
         )
 
-    else:
-        response = JSONResponse(
-            status_code=HTTP_200_OK,
-            content=json.dumps({"status": "pending"}),
-        )
-        response.set_cookie("evault_poll_attempt", f"{attempt + 1}")
-        return response
+    response = JSONResponse(
+        status_code=HTTP_200_OK,
+        content=json.dumps({"status": "pending"}),
+    )
+    response.set_cookie("evault_poll_attempt", f"{attempt + 1}")
+    return response
 
 
 @router.get("/refresh")
@@ -171,14 +170,13 @@ def auth_refresh(
     if device_type == "cli":
         return fastapi.Response(status_code=HTTP_200_OK)
 
-    else:
-        evault_access_token = request.cookies.get("evault_access_token")
-        assert evault_access_token
+    evault_access_token = request.cookies.get("evault_access_token")
+    assert evault_access_token
 
-        response = Response(status_code=HTTP_200_OK)
-        response.set_cookie(
-            key="evault_access_token",
-            value=evault_access_token,
-            expires=EVAULT_SESSION_TOKEN_TTL,
-        )
-        return response
+    response = Response(status_code=HTTP_200_OK)
+    response.set_cookie(
+        key="evault_access_token",
+        value=evault_access_token,
+        expires=EVAULT_SESSION_TOKEN_TTL,
+    )
+    return response
