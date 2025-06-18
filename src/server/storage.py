@@ -7,6 +7,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
 from .models import Repository, User
 from ..pkg.types import UserSession
+from loguru import logger
+from starlette.status import (
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+)
 
 
 type SSLMode = Literal["require", "disable"]
@@ -24,9 +29,9 @@ class Database:
         port: int = 5432,
         ssl: SSLMode = "require",
     ) -> None:
-        conn_str = f"postgresql://{user}:{password}@{host}:{port}/{db}?sslmode={ssl}"
-        self.engine = sql.create_engine(conn_str, echo=True)
-        print("Connected to database")
+        c = f"postgresql://{user}:{password}@{host}:{port}/{db}?sslmode={ssl}"
+        self.engine = sql.create_engine(c, echo=True)
+        logger.info("Connected to database")
 
     def get_repository(self, repo_id: int) -> Optional[Repository]:
         with Session(self.engine) as s:
@@ -55,7 +60,7 @@ class Database:
                 s.refresh(repo)
             except IntegrityError:
                 raise HTTPException(
-                    status_code=400,
+                    status_code=HTTP_400_BAD_REQUEST,
                     detail="Repository exists.",
                 )
 
@@ -86,7 +91,7 @@ class Redis(redispy.Redis):
     def __init__(self, host: str, port: int) -> None:
         super().__init__(host, port)
         self.ping()
-        print("Connected to redis")
+        logger.info("Connected to redis")
 
     def create_user_session(
         self,
@@ -129,12 +134,12 @@ class Redis(redispy.Redis):
         key = f"evault-token-poll:{session_id}"
         self.set(name=key, value=evault_access_token, ex=ttl)
 
-    def get_token_poll(self, session_id: str) -> Optional[str]:
+    def get_token_poll(self, session_id: str) -> str | None:
         t = self.getdel(f"evault-token-poll:{session_id}")
         if t:
             return t.decode()
 
-        raise HTTPException(status_code=404)
+        return None
 
     def cache_auth_url(self, session_id: str, auth_url: str, ttl: int):
         key = self._make_auth_url_key(session_id)
@@ -144,7 +149,10 @@ class Redis(redispy.Redis):
         key = self._make_auth_url_key(session_id)
         t = self.get(key)
         if not t:
-            raise HTTPException(status_code=401)
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED,
+                content="Login link expired.",
+            )
 
         return t.decode()
 
@@ -157,7 +165,7 @@ class Redis(redispy.Redis):
         key = self._make_auth_url_key(session_id)
         url_removed = self.delete(key)
         if url_removed != 1:
-            raise HTTPException(status_code=401)
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
 
     def _make_session_key(self, session_id: str) -> str:
         return f"evault-session:{session_id}"

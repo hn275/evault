@@ -1,52 +1,66 @@
-import secrets, fastapi, urllib.parse as urlparse, json
+import fastapi
+import urllib.parse as urlparse
+import json
+import secrets
+from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse, JSONResponse, RedirectResponse
-from fastapi import status
-from starlette.status import HTTP_200_OK
-from ..pkg.types import DeviceType, GithubAuthToken
-from .config import (
+from starlette.status import (
+    HTTP_200_OK,
+    HTTP_302_FOUND,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
+)
+from evault.src.server.config import (
     db,
-    app,
     redis,
     httpclient,
     oauth_client,
-    EVAULT_WEB_URL,
-    EVAULT_TOKEN_POLL_TTL,
-    GITHUB_OAUTH_STATE_TTL,
-    EVAULT_SESSION_TOKEN_TTL,
-    EVAULT_TOKEN_POLL_MAX_ATTEMPT,
 )
-from ..pkg.types import UserSession
+from evault.src.server.config import EVAULT_WEB_URL
+from evault.src.server.config import EVAULT_TOKEN_POLL_TTL
+from evault.src.server.config import GITHUB_OAUTH_STATE_TTL
+from evault.src.server.config import EVAULT_SESSION_TOKEN_TTL
+from evault.src.server.config import EVAULT_TOKEN_POLL_MAX_ATTEMPT
+from evault.src.pkg.types import DeviceType, GithubAuthToken, UserSession
+
+router = APIRouter(prefix="/api/github/auth", dependencies=[])
 
 
-@app.get("/api/auth")
+@router.get("/")
 async def auth(device_type: DeviceType):
     oauth_state = secrets.token_urlsafe(32)
     session_id = secrets.token_urlsafe(16)
-    oauth_login_url = oauth_client.make_login_url(oauth_state, session_id, device_type)
+    oauth_login_url = oauth_client.make_login_url(
+        oauth_state,
+        session_id,
+        device_type,
+    )
 
     redis.cache_auth_url(session_id, oauth_login_url, GITHUB_OAUTH_STATE_TTL)
     if device_type == "web":
-        return RedirectResponse(url=oauth_login_url, status_code=status.HTTP_302_FOUND)
+        return RedirectResponse(
+            url=oauth_login_url,
+            status_code=HTTP_302_FOUND,
+        )
 
+    param = urlparse.urlencode({"session_id": session_id})
+    url = f"{EVAULT_WEB_URL}/auth?{param}"
     return fastapi.Response(
-        content=f"{EVAULT_WEB_URL}/auth?{urlparse.urlencode({"session_id": session_id})}",
+        content=url,
         media_type="text/plain",
     )
 
 
-@app.get("/api/auth/url")
+@router.get("/url")
 def auth_url(session_id: str):
     oauth_login_url = redis.get_auth_url(session_id)
-    if oauth_login_url == None:
-        return PlainTextResponse(status_code=401, content="Login link expired.")
-
     oauth_login_url = oauth_login_url.decode()
     redis.renew_auth_url(session_id, GITHUB_OAUTH_STATE_TTL)
 
     return PlainTextResponse(content=oauth_login_url)
 
 
-@app.get("/api/auth/token")
+@router.get("/token")
 def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     oauth_login_url = redis.get_auth_url(session_id)
     redis.remove_auth_url(session_id)
@@ -57,12 +71,15 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     assert session_state
     session_state = session_state[0]
     if session_state != state:
-        return PlainTextResponse(content="Invalid authentication", status_code=401)
+        return PlainTextResponse(
+            content="Invalid authentication",
+            status_code=HTTP_401_UNAUTHORIZED,
+        )
 
     # get access token from github
     auth_url = oauth_client.make_web_access_tok_url(code)
     r = httpclient.post(auth_url, headers={"Accept": "application/json; charset=utf-8"})
-    assert r.status_code == 200
+    assert r.status_code == HTTP_200_OK
 
     gh_token = GithubAuthToken(**r.json())
 
@@ -102,13 +119,13 @@ def auth_token(session_id: str, code: str, state: str, device_type: DeviceType):
     return response
 
 
-@app.get("/api/auth/poll")
+@router.get("/poll")
 async def auth_poll(session_id: str, req: fastapi.Request):
-    access_token = redis.get_token_poll(session_id)
+    access_token: str | None = redis.get_token_poll(session_id)
 
-    if access_token != None:
+    if access_token is not None:
         return JSONResponse(
-            status_code=200,
+            status_code=HTTP_200_OK,
             content=json.dumps({"status": "ok", "access_token": access_token}),
         )
 
@@ -117,20 +134,20 @@ async def auth_poll(session_id: str, req: fastapi.Request):
 
     if attempt >= EVAULT_TOKEN_POLL_MAX_ATTEMPT:
         return JSONResponse(
-            status_code=403,
+            status_code=HTTP_403_FORBIDDEN,
             content=json.dumps({"status": "abort", "error": "Max attempt exceeded."}),
         )
 
     else:
         response = JSONResponse(
-            status_code=200,
+            status_code=HTTP_200_OK,
             content=json.dumps({"status": "pending"}),
         )
         response.set_cookie("evault_poll_attempt", f"{attempt + 1}")
         return response
 
 
-@app.get("/api/auth/refresh")
+@router.get("/refresh")
 def auth_refresh(access_token: str, device_type: DeviceType, request: fastapi.Request):
     """
     for device_type=web, the access_token should be an empty string
@@ -138,13 +155,13 @@ def auth_refresh(access_token: str, device_type: DeviceType, request: fastapi.Re
     redis.renew_user_session(access_token, EVAULT_SESSION_TOKEN_TTL)
 
     if device_type == "cli":
-        return fastapi.Response(status_code=200)
+        return fastapi.Response(status_code=HTTP_200_OK)
 
     else:
         evault_access_token = request.cookies.get("evault_access_token")
         assert evault_access_token
 
-        response = fastapi.Response(status_code=200)
+        response = fastapi.Response(status_code=HTTP_200_OK)
         response.set_cookie(
             key="evault_access_token",
             value=evault_access_token,
