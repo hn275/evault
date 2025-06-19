@@ -1,6 +1,5 @@
 import secrets
-from src.server.crypto import derive_repo_key
-from src.server.crypto import KEY_LENGTH
+from src.server.crypto.kdf import derive_repo_key, KEY_LENGTH
 from random import randint
 
 

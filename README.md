@@ -5,41 +5,37 @@
 
 # Getting Started
 
-Install all project deps.
+Note: that there is a CI for Python 3.12 and 3.13, any other versions are not tested and may not work.
+
+1. Install all project deps. Reminder to activate your virtual environment.
 
 ```sh
-# NOTE: if running into importing issue, install the project as a module on
-# your machine
+# install all deps, including the project
 pip install -e .
-
-# install all deps
 pip install -r requirements.txt
 ```
 
-Migrate database to the latest revision.
+2. Migrate database to the latest revision.
 
 ```sh
 alembic upgrade head
 ```
 
-Start server
+3. Start server
 
 ```sh
 fastapi dev src/server/main.py
+# or there is an alias (for bash environment) for convenience
+fastapi dev server
 ```
 
 There's a Docker Compose `compose.yml` file for Redis + PostGreSQL server.
 Mapping to the ports 5432 and 6379 respectively.
 
 ```sh
-docker compose up
+docker compose up -d
 ```
 
 # Documentations
 
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [Alembic](https://alembic.sqlalchemy.org/en/latest/index.html) - database migration
-- [Alchemy](https://docs.sqlalchemy.org/en/20/orm/quickstart.html) - ORM (comes with Alembic)
-- [PyCryptodome](https://pycryptodome.readthedocs.io/en/latest/src/cipher/chacha20_poly1305.html) for XChaCha20-Poly1305
-- [redis-py](https://redis.readthedocs.io/en/stable/index.html)
 - [GitHub REST API](https://docs.github.com/en/rest/repos?apiVersion=2022-11-28)
