@@ -1,5 +1,9 @@
-// Whenever the session expires, this wrapper would redirect the user to the home page.
-// This should be used for all API calls that require authentication.
+/**
+ * Whenever the session expires, this wrapper would redirect the user to the home page.
+ * This should be used for all API calls that require authentication.
+ *
+ * @deprecated use axios instance `httpClient` instead
+ * */
 export const fetchWithRedirect = async (url: string, options?: RequestInit) => {
   return fetch(url, options)
     .then((r) => {
