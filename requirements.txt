@@ -13,6 +13,7 @@ dacite==1.9.2
 dill==0.4.0
 dnspython==2.7.0
 email_validator==2.2.0
+-e git+ssh://git@github.com/hn275/evault.git@3e4baa5a3a1083eff7f8c21ffe7734b9e804c56f#egg=evault
 fastapi==0.115.12
 fastapi-cli==0.0.7
 flatten-dict==0.4.2
