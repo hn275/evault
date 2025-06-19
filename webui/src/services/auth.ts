@@ -1,5 +1,6 @@
 import type { User } from "../types/User";
 import { httpClient } from "../utils/axios";
+import type { GitHubOAuthSearchParams } from "../utils/zod/gitHubParams";
 
 // Fetch the user's information from the API
 export async function getUser(): Promise<User> {
@@ -13,6 +14,7 @@ export async function getUser(): Promise<User> {
 }
 
 // Exchange the GitHub authentication
-export async function getGitHubAuth(p: URLSearchParams) {
+export async function getGitHubAuth(oauthParams: GitHubOAuthSearchParams) {
+  const p = new URLSearchParams(oauthParams);
   return httpClient.get(`/api/auth/token?${p.toString()}`);
 }
