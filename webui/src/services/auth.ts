@@ -4,7 +4,7 @@ import type { GitHubOAuthSearchParams } from "../utils/zod/gitHubParams";
 
 // Fetch the user's information from the API
 export async function getUser(): Promise<User> {
-  const r = await httpClient.get("/api/dashboard/user", {
+  const r = await httpClient.get("/dashboard/user", {
     transformResponse: (data) => {
       // TODO: adding zod type validation
       return data;
@@ -16,5 +16,5 @@ export async function getUser(): Promise<User> {
 // Exchange the GitHub authentication
 export async function getGitHubAuth(oauthParams: GitHubOAuthSearchParams) {
   const p = new URLSearchParams(oauthParams);
-  return httpClient.get(`/api/auth/token?${p.toString()}`);
+  return httpClient.get(`/auth/token?${p.toString()}`);
 }
