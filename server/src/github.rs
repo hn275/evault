@@ -6,6 +6,7 @@ use crate::errors::Result;
 use crate::utils::env::{env_or_default, env_or_panic};
 
 const GITHUB_OAUTH_SCOPE: &'static str = "repo read:user";
+pub const GITHUB_OAUTH_STATE_TTL: u64 = 120; // 2 minutes
 
 pub struct GitHubAPI {
     oauth_client_id: String,
