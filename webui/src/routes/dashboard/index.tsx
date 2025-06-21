@@ -15,7 +15,7 @@ function RouteComponent() {
   const { repos } = useRepository();
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <Box display="flex" flexDirection="column" gap={1}>
       {user ? (
         <>
           <Breadcrumbs paths={[{ display: "Dashboard", href: "/dashboard" }]} />

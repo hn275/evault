@@ -4,11 +4,13 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 export function LoaderWithText({ text }: { text: string }) {
   return (
     <Box
-      display="flex"
-      flexDirection="column"
-      justifyContent="center"
-      alignItems="center"
-      height="100%"
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100%",
+      }}
     >
       <CircularProgress />
       <Typography>{text}</Typography>

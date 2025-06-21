@@ -58,7 +58,6 @@ export function NewVault({
           <form.Field
             name="password"
             children={(field) => (
-              <>
                 <TextField
                   label="Password"
                   variant="outlined"
@@ -73,14 +72,12 @@ export function NewVault({
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
                 />
-              </>
             )}
           />
 
           <form.Field
             name="passwordConfirm"
             children={(field) => (
-              <>
                 <TextField
                   label="Re-enter password"
                   variant="outlined"
@@ -92,7 +89,6 @@ export function NewVault({
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
                 />
-              </>
             )}
           />
         </Stack>
