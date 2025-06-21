@@ -1,4 +1,5 @@
 use anyhow::Context;
+use secrecy::SecretString;
 use url::Url;
 
 use crate::errors::Result;
@@ -8,7 +9,7 @@ const GITHUB_OAUTH_SCOPE: &'static str = "repo read:user";
 
 pub struct GitHubAPI {
     oauth_client_id: String,
-    oauth_client_secret: String,
+    oauth_client_secret: SecretString,
     oauth_redirect_uri: String,
 }
 
@@ -16,7 +17,7 @@ impl GitHubAPI {
     pub fn new() -> Self {
         Self {
             oauth_client_id: env_or_panic("GITHUB_OAUTH_CLIENT_ID"),
-            oauth_client_secret: env_or_panic("GITHUB_OAUTH_CLIENT_SECRET"),
+            oauth_client_secret: env_or_panic("GITHUB_OAUTH_CLIENT_SECRET").into(),
             oauth_redirect_uri: env_or_default(
                 "GITHUB_OAUTH_REDIRECT_URI",
                 "http://localhost:5173/auth/github",
