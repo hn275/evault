@@ -8,4 +8,5 @@ tmp/
 
 # Added by cargo
 
+/target
 **/*/target
