@@ -1,10 +1,21 @@
+use std::collections::HashMap;
 use std::time::Duration;
 
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use redis::Commands;
+use redis_macros::{FromRedisValue, ToRedisArgs};
+use reqwest::StatusCode;
+use serde::{Deserialize, Serialize};
+use tracing::info;
 
 use crate::errors::{AppError, Result};
 use crate::utils::env::env_or_panic;
+
+#[derive(ToRedisArgs, FromRedisValue, Deserialize, Serialize)]
+pub struct RedisAuthSession {
+    pub state: String,
+    pub device_type: String,
+}
 
 pub struct Redis {
     pool: r2d2::Pool<redis::Client>,
@@ -31,24 +42,51 @@ impl Redis {
         Ok(Redis { pool })
     }
 
-    pub fn cache_auth_url(&self, session_id: &str, auth_url: &str, ttl: u64) -> Result<()> {
+    pub fn make_auth_session(
+        &self,
+        session_id: &str,
+        auth_session: &RedisAuthSession,
+        ttl: u64,
+    ) -> Result<()> {
         let key = Self::make_auth_url_key(session_id);
+        let opts = redis::HashFieldExpirationOptions::default()
+            .set_existence_check(redis::FieldExistenceCheck::FNX)
+            .set_expiration(redis::SetExpiry::EX(ttl));
+
         Ok(self
             .pool
             .get()
             .context("Failed to get Redis connection.")?
-            .set_ex(key, auth_url, ttl)
+            .hset_ex(
+                key,
+                &opts,
+                &[
+                    ("state", &auth_session.state),
+                    ("device_type", &auth_session.device_type),
+                ],
+            )
             .context("Failed to cache authentication URL.")?)
     }
 
-    pub fn get_del_auth_url(&self, session_id: &str) -> Result<Option<String>> {
+    pub fn get_auth_session(&self, session_id: &str) -> Result<RedisAuthSession> {
         let key = Self::make_auth_url_key(session_id);
-        Ok(self
+        let result = self
             .pool
             .get()
             .context("Failed to get Redis connection.")?
-            .get_del::<_, Option<String>>(key)
-            .context("Failed to get and delete authentication URL for session.")?)
+            .hgetall::<_, HashMap<String, String>>(key)
+            .context("Failed to deserialize authentication session.")?;
+
+        Ok(RedisAuthSession {
+            state: result
+                .get("state")
+                .context("Key `state` does not exist.")?
+                .to_owned(),
+            device_type: result
+                .get("device_type")
+                .context("Key `device_type` does not exist.")?
+                .to_owned(),
+        })
     }
 
     fn make_auth_url_key(session_id: &str) -> String {
