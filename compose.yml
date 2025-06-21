@@ -17,6 +17,8 @@ services:
       - "5432:5432"
     volumes:
       - ./tmp/evault/postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ./server/.env
     environment:
       - POSTGRES_DB=evault
       - POSTGRES_USER=${POSTGRES_USER}
