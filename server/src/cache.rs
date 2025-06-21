@@ -41,6 +41,16 @@ impl Redis {
             .context("Failed to cache authentication URL.")?)
     }
 
+    pub fn get_del_auth_url(&self, session_id: &str) -> Result<Option<String>> {
+        let key = Self::make_auth_url_key(session_id);
+        Ok(self
+            .pool
+            .get()
+            .context("Failed to get Redis connection.")?
+            .get_del::<_, Option<String>>(key)
+            .context("Failed to get and delete authentication URL for session.")?)
+    }
+
     fn make_auth_url_key(session_id: &str) -> String {
         format!("evault-auth-session:{}", session_id)
     }
