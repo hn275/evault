@@ -4,3 +4,8 @@
 evault-credentials.json
 webui/node_modules/
 tmp/
+
+
+# Added by cargo
+
+**/*/target
