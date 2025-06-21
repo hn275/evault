@@ -4,11 +4,13 @@ import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import { githubDarkTheme } from "./utils/muiTheme";
 
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
+
 
 // Create a new router instance
 const router = createRouter({ routeTree });
@@ -20,17 +22,11 @@ declare module "@tanstack/react-router" {
   }
 }
 
-const theme = createTheme({
-  palette: {
-    mode: "light",
-  },
-});
-
 const rootElement = document.getElementById("root")!;
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={githubDarkTheme}>
       <CssBaseline />
       <RouterProvider router={router} />
     </ThemeProvider>,

@@ -49,9 +49,9 @@ export function NewVault({
       }}
     >
       <DialogTitle>New Vault</DialogTitle>
-      <DialogContent>
+      <DialogContent dividers>
         <DialogContentText>
-          Create a new vault for this repository.
+          Please enter a password to create a new vault for this repository.
         </DialogContentText>
         <Stack>
           {/* TODO: This can be refactored into another component */}
@@ -63,6 +63,10 @@ export function NewVault({
                   label="Password"
                   variant="outlined"
                   type="password"
+                  size="small"
+                  sx={{
+                    my: 1,
+                  }}
                   id={field.name}
                   name={field.name}
                   value={field.state.value}
@@ -81,6 +85,7 @@ export function NewVault({
                   label="Re-enter password"
                   variant="outlined"
                   type="password"
+                  size="small"
                   id={field.name}
                   name={field.name}
                   value={field.state.value}

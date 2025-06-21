@@ -59,7 +59,7 @@ function LoadingState() {
       alignItems="center"
       mx="auto"
     >
-      <Typography variant="h4" color="textPrimary">
+      <Typography variant="h4" color="text.primary">
         Authenticating with GitHub
       </Typography>
 
@@ -74,7 +74,7 @@ function LoadingState() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
               >
-                <Typography variant="body1" color="textSecondary">
+                <Typography variant="body1" color="text.secondary">
                   {text}
                 </Typography>
               </motion.div>
