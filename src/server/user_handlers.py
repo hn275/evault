@@ -46,8 +46,8 @@ def get_user_repositories(evault_access_token: str = Depends(auth_middleware)):
     assert user != None
 
     repos = httpclient.fetch_user_repositories(
-        user.token.token_type,
-        user.token.access_token,
+        user.gh_token.token_type,
+        user.gh_token.access_token,
     )
 
     body = [asdict(r) for r in repos]
@@ -81,8 +81,8 @@ def get_repository(
         assert d != None
 
         remote_repository = httpclient.fetch_repository(
-            d.token.token_type,
-            d.token.access_token,
+            d.gh_token.token_type,
+            d.gh_token.access_token,
             owner,
             repo_name,
         )
@@ -118,8 +118,8 @@ def create_new_repository(
     assert d != None
 
     repository = httpclient.fetch_repository(
-        d.token.token_type,
-        d.token.access_token,
+        d.gh_token.token_type,
+        d.gh_token.access_token,
         owner,
         repo_name,
     )
