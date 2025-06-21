@@ -58,37 +58,37 @@ export function NewVault({
           <form.Field
             name="password"
             children={(field) => (
-                <TextField
-                  label="Password"
-                  variant="outlined"
-                  type="password"
-                  size="small"
-                  sx={{
-                    my: 1,
-                  }}
-                  id={field.name}
-                  name={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
+              <TextField
+                label="Password"
+                variant="outlined"
+                type="password"
+                size="small"
+                sx={{
+                  my: 1,
+                }}
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
             )}
           />
 
           <form.Field
             name="passwordConfirm"
             children={(field) => (
-                <TextField
-                  label="Re-enter password"
-                  variant="outlined"
-                  type="password"
-                  size="small"
-                  id={field.name}
-                  name={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
+              <TextField
+                label="Re-enter password"
+                variant="outlined"
+                type="password"
+                size="small"
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
             )}
           />
         </Stack>
