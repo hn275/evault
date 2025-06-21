@@ -13,5 +13,5 @@ export function getGitHubAuth(
   params: GitHubOAuthSearchParams,
 ): Promise<Response> {
   const p = new URLSearchParams(params);
-  return fetch(`/api/auth/token?${p.toString()}`);
+  return fetch(`/api/github/auth/token?${p.toString()}`);
 }

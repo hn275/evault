@@ -8,6 +8,7 @@ use serde::Deserialize;
 
 use crate::{app::AppState, errors::Result, github::GITHUB_OAUTH_STATE_TTL, secrets};
 
+// /api/github/auth
 #[derive(Deserialize)]
 pub struct AuthQuery {
     pub device_type: String,
@@ -28,4 +29,22 @@ pub async fn auth(
         .cache_auth_url(&session_id, &oauth_login_url, GITHUB_OAUTH_STATE_TTL)?;
 
     Ok(Redirect::to(&oauth_login_url))
+}
+
+// /api/github/token
+#[derive(Deserialize)]
+pub struct TokenQuery {
+    session_id: String,
+    device_type: String,
+    code: String,
+    state: String,
+}
+
+pub async fn auth_token(
+    State(app): State<Arc<AppState>>,
+    Query(q): Query<TokenQuery>,
+) -> Result<impl IntoResponse> {
+    let a = app.redis.get_del_auth_url("alskdflksdflkj")?;
+    dbg!(a);
+    Ok(String::new())
 }

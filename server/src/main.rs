@@ -62,6 +62,7 @@ async fn main() -> anyhow::Result<()> {
     // nested router, path prefix `/api/github`
     let github_router = Router::new()
         .route("/auth", get(handlers::auth::auth))
+        .route("/auth/token", get(handlers::auth::auth_token))
         .with_state(app);
 
     // main router
