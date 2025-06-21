@@ -7,7 +7,9 @@ use axum::{
     http::{Method, header},
     routing::get,
 };
+use cache::Redis;
 use dotenv::dotenv;
+use github::GitHubAPI;
 use tower_http::{
     cors::{Any, CorsLayer},
     trace::TraceLayer,
@@ -16,6 +18,7 @@ use tracing::info;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 mod app;
+mod cache;
 mod errors;
 mod github;
 mod handlers;
@@ -49,9 +52,13 @@ async fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // build router
-    let app = Arc::new(AppState::initialize());
+    // build app state
+    let app = Arc::new(AppState {
+        github: GitHubAPI::new(),
+        redis: Redis::new()?,
+    });
 
+    // build router
     // nested router, path prefix `/api/github`
     let github_router = Router::new()
         .route("/auth", get(handlers::auth::auth))
@@ -69,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(TraceLayer::new_for_http());
 
     // bind listener to router
-    let addr: SocketAddr = env::env_or_default("ADDR", "0.0.0.0:8000")
+    let addr: SocketAddr = env::env_or_default("EVAULT_ADDR", "0.0.0.0:8000")
         .parse()
         .context("invalid binding socket address.")?;
     let listener = tokio::net::TcpListener::bind(addr).await?;
