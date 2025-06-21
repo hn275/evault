@@ -1,7 +1,8 @@
 use std::time::Duration;
 
 use anyhow::Context;
-use reqwest::header::{ACCEPT, HeaderValue};
+use reqwest::StatusCode;
+use reqwest::header::{ACCEPT, AUTHORIZATION, HeaderValue, USER_AGENT};
 use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use url::Url;
@@ -12,19 +13,28 @@ use crate::utils::env::{env_or_default, env_or_panic};
 const GITHUB_OAUTH_SCOPE: &'static str = "repo read:user";
 pub const GITHUB_OAUTH_STATE_TTL: u64 = 120; // 2 minutes
 
+#[derive(Debug, Deserialize)]
+pub struct GitHubAuthToken {
+    pub access_token: SecretString,
+    pub token_type: String,
+    pub scope: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GitHubUserProfile {
+    pub id: u64,
+    pub login: String,
+    pub name: String,
+    pub email: Option<String>,
+    pub avatar_url: String,
+}
+
 pub struct GitHubAPI {
     oauth_client_id: String,
     oauth_client_secret: SecretString,
     oauth_redirect_uri: String,
 
     http: reqwest::Client,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct GitHubAuthToken {
-    access_token: String,
-    token_type: String,
-    scope: String,
 }
 
 impl GitHubAPI {
@@ -38,6 +48,7 @@ impl GitHubAPI {
             ACCEPT,
             HeaderValue::from_static("application/vnd.github+json"),
         );
+        headers.insert(USER_AGENT, HeaderValue::from_static("evault"));
 
         let http = reqwest::Client::builder()
             .default_headers(headers)
@@ -65,7 +76,7 @@ impl GitHubAPI {
             .post(url)
             .send()
             .await
-            .context("Failed to build request")?;
+            .context("Failed to issue POST request")?;
 
         if response.status() != reqwest::StatusCode::OK {
             Err(AppError::Response(
@@ -78,6 +89,41 @@ impl GitHubAPI {
             .json::<GitHubAuthToken>()
             .await
             .context("Failed to parse GitHub access token response")?)
+    }
+
+    pub async fn fetch_user_profile(
+        &self,
+        gh_token: &GitHubAuthToken,
+    ) -> Result<GitHubUserProfile> {
+        let auth_header = HeaderValue::from_str(&format!(
+            "{} {}",
+            gh_token.token_type,
+            gh_token.access_token.expose_secret()
+        ))
+        .context("Failed to format authorization header")?;
+
+        let response = self
+            .http
+            .get("https://api.github.com/user")
+            .header(AUTHORIZATION, auth_header)
+            .send()
+            .await
+            .context("Failed to issue GET request.")?;
+
+        if response.status() != StatusCode::OK {
+            return Err(AppError::Response(
+                response.status(),
+                response
+                    .text()
+                    .await
+                    .context("Failed to read response body.")?,
+            ));
+        }
+
+        Ok(response
+            .json::<GitHubUserProfile>()
+            .await
+            .context("Failed to parse GitHub user profile response")?)
     }
 
     fn make_github_oauth_url(&self, code: &str) -> Result<String> {

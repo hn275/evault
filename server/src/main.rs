@@ -8,6 +8,7 @@ use axum::{
     routing::get,
 };
 use cache::Redis;
+use database::Database;
 use dotenv::dotenv;
 use github::GitHubAPI;
 use tower_http::{
@@ -19,6 +20,7 @@ use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitEx
 
 mod app;
 mod cache;
+mod database;
 mod errors;
 mod github;
 mod handlers;
@@ -56,6 +58,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Arc::new(AppState {
         github: GitHubAPI::new(),
         redis: Redis::new()?,
+        database: Database::new().await?,
     });
 
     // build router

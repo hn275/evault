@@ -5,11 +5,12 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Redirect},
 };
+use axum_extra::extract::cookie::{Cookie, CookieJar};
 use serde::Deserialize;
 
 use crate::{
     app::AppState,
-    cache::RedisAuthSession,
+    cache::{EVAULT_SESSION_TTL, RedisAuthSession, UserSession},
     errors::{AppError, Result},
     github::GITHUB_OAUTH_STATE_TTL,
     secrets,
@@ -55,6 +56,7 @@ pub struct TokenQuery {
 pub async fn auth_token(
     State(app): State<Arc<AppState>>,
     Query(q): Query<TokenQuery>,
+    cookie_jar: CookieJar,
 ) -> Result<impl IntoResponse> {
     let auth_session = app.redis.get_auth_session(&q.session_id)?;
 
@@ -66,7 +68,25 @@ pub async fn auth_token(
     }
 
     let github_oauth_token = app.github.fetch_user_auth_token(&q.code).await?;
-    dbg!(&github_oauth_token);
+    let user_profile = app.github.fetch_user_profile(&github_oauth_token).await?;
+    let evault_access_token = secrets::token_urlsafe(32)?;
 
-    Ok(String::new())
+    let user_session = UserSession {
+        session_id: evault_access_token,
+        user_id: user_profile.id,
+        user_name: user_profile.name.clone(),
+        user_avatar_url: user_profile.avatar_url.clone(),
+        token: github_oauth_token,
+    };
+
+    app.redis
+        .create_user_session(&user_session, EVAULT_SESSION_TTL)?;
+
+    app.database.create_github_user(&user_profile).await?;
+
+    let session_cookie = Cookie::build(("evault_access_token", user_session.session_id)).build();
+
+    let jar = cookie_jar.add(session_cookie);
+
+    Ok((StatusCode::OK, jar))
 }

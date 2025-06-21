@@ -2,19 +2,32 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use anyhow::{Context, anyhow};
-use redis::Commands;
+use axum::http::StatusCode;
+use redis::{Commands, ToRedisArgs};
 use redis_macros::{FromRedisValue, ToRedisArgs};
-use reqwest::StatusCode;
+use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tracing::{error, info};
 
 use crate::errors::{AppError, Result};
+use crate::github::GitHubAuthToken;
 use crate::utils::env::env_or_panic;
+
+pub const EVAULT_SESSION_TTL: u64 = 300; // 5 minutes
 
 #[derive(ToRedisArgs, FromRedisValue, Deserialize, Serialize)]
 pub struct RedisAuthSession {
     pub state: String,
     pub device_type: String,
+}
+
+#[derive(Debug)]
+pub struct UserSession {
+    pub session_id: String,
+    pub user_id: u64,
+    pub user_avatar_url: String,
+    pub user_name: String,
+    pub token: GitHubAuthToken,
 }
 
 pub struct Redis {
@@ -38,6 +51,8 @@ impl Redis {
             .max_lifetime(Some(Duration::from_secs(3600)))
             .build(client)
             .context("Failed to build Redis pool.")?;
+
+        info!("Connected to Redis server.");
 
         Ok(Redis { pool })
     }
@@ -70,12 +85,14 @@ impl Redis {
 
     pub fn get_auth_session(&self, session_id: &str) -> Result<RedisAuthSession> {
         let key = Self::make_auth_url_key(session_id);
-        let result = self
-            .pool
-            .get()
-            .context("Failed to get Redis connection.")?
-            .hgetall::<_, HashMap<String, String>>(key)
+        let mut conn = self.pool.get().context("Failed to get Redis connection.")?;
+        let result = conn
+            .hgetall::<_, HashMap<String, String>>(&key)
             .context("Failed to deserialize authentication session.")?;
+
+        let _: () = conn
+            .del(key)
+            .context("Failed to remove authentication session.")?;
 
         Ok(RedisAuthSession {
             state: result
@@ -89,7 +106,47 @@ impl Redis {
         })
     }
 
+    pub fn create_user_session(&self, session: &UserSession, ttl: u64) -> Result<()> {
+        let key = Self::make_user_session_key(&session.session_id);
+        let opts = redis::HashFieldExpirationOptions::default()
+            .set_existence_check(redis::FieldExistenceCheck::FNX)
+            .set_expiration(redis::SetExpiry::EX(ttl));
+
+        let _: () = self
+            .pool
+            .get()
+            .context("Failed to get Redis connection.")?
+            .hset_ex(
+                key,
+                &opts,
+                &[
+                    ("user.id", session.user_id.to_redis_args()),
+                    (
+                        "token.value",
+                        session.token.access_token.expose_secret().to_redis_args(),
+                    ),
+                    ("token.type", session.token.token_type.to_redis_args()),
+                    ("token.scope", session.token.scope.to_redis_args()),
+                ],
+            )
+            .map_err(|err| {
+                error!(
+                    "Failed to create user session: {}, {}",
+                    session.session_id, err
+                );
+                AppError::Response(
+                    StatusCode::UNAUTHORIZED,
+                    "Failed to create user session".to_string(),
+                )
+            })?;
+
+        Ok(())
+    }
+
     fn make_auth_url_key(session_id: &str) -> String {
         format!("evault-auth-session:{}", session_id)
+    }
+    fn make_user_session_key(session_id: &str) -> String {
+        format!("evault-user-session:{}", session_id)
     }
 }
