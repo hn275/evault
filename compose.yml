@@ -1,4 +1,22 @@
 services:
+
+  server:
+    image: evault/server
+    container_name: evault-server
+    build:
+      context: ./server
+      dockerfile: ./dockerfiles/server.development.Dockerfile
+      target: server-debug
+    volumes:
+      - server-data:/evault_server
+      - ./server/src:/evault_server/src
+    ports:
+      - "8000:8000"
+    env_file: ".env"
+    depends_on:
+      - redis
+      - postgres
+
   redis:
     image: redis:8.0.2-alpine
     container_name: evault-redis
@@ -23,5 +41,6 @@ services:
       - POSTGRES_PASSWORD=bar
 
 volumes:
+  server-data:
   pg-data:
   redis-data:

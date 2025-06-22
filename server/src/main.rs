@@ -31,7 +31,7 @@ use utils::{Stage, env};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    dotenv().context("failed to load .env file")?;
+    let _ = dotenv();
     // configure logging
     let stage = Stage::read_from_env()?;
     let log_cfg = match stage {
