@@ -5,6 +5,16 @@
 
 # Getting Started
 
+## Docker Compose
+
+The recommended way to run the application is using `docker compose`
+
+```sh
+docker compose up
+```
+
+## Local
+
 Install all project deps.
 
 ```sh

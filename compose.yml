@@ -1,25 +1,55 @@
 services:
 
+  traefik:
+    container_name: evault-traefik
+    image: traefik:v3.4
+    ports:
+      - "5173:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - server
+      - webui
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+
   server:
-    image: evault/server
     container_name: evault-server
     build:
       context: ./server
-      dockerfile: ./dockerfiles/server.development.Dockerfile
-      target: server-debug
+      dockerfile: ../dockerfiles/server.development.Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.server.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.server.entrypoints=web"
+      - "traefik.http.services.server.loadbalancer.server.port=8000"
     volumes:
-      - server-data:/evault_server
       - ./server/src:/evault_server/src
-    ports:
-      - "8000:8000"
+      - server-data:/evault_server/target
     env_file: ".env"
     depends_on:
       - redis
       - postgres
 
+  webui:
+    container_name: evault-webui
+    build:
+      context: ./webui
+      dockerfile: ../dockerfiles/webui.development.Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.web.entrypoints=web"
+      - "traefik.http.services.web.loadbalancer.server.port=5173"
+    volumes:
+      - ./webui/src/:/evault_webui/src/
+
   redis:
-    image: redis:8.0.2-alpine
     container_name: evault-redis
+    image: redis:8.0.2-alpine
     ports:
       - "6379:6379"
     volumes:
@@ -29,8 +59,8 @@ services:
       - REDIS_REPLICATION_MODE=master
 
   postgres:
-    image: postgres:17.5-alpine3.22
     container_name: evault-postgres
+    image: postgres:17.5-alpine3.22
     ports:
       - "5432:5432"
     volumes:
