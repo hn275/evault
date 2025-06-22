@@ -49,45 +49,46 @@ export function NewVault({
       }}
     >
       <DialogTitle>New Vault</DialogTitle>
-      <DialogContent>
+      <DialogContent dividers>
         <DialogContentText>
-          Create a new vault for this repository.
+          Please enter a password to create a new vault for this repository.
         </DialogContentText>
         <Stack>
           {/* TODO: This can be refactored into another component */}
           <form.Field
             name="password"
             children={(field) => (
-              <>
-                <TextField
-                  label="Password"
-                  variant="outlined"
-                  type="password"
-                  id={field.name}
-                  name={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              </>
+              <TextField
+                label="Password"
+                variant="outlined"
+                type="password"
+                size="small"
+                sx={{
+                  my: 1,
+                }}
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
             )}
           />
 
           <form.Field
             name="passwordConfirm"
             children={(field) => (
-              <>
-                <TextField
-                  label="Re-enter password"
-                  variant="outlined"
-                  type="password"
-                  id={field.name}
-                  name={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              </>
+              <TextField
+                label="Re-enter password"
+                variant="outlined"
+                type="password"
+                size="small"
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
             )}
           />
         </Stack>
