@@ -1,0 +1,37 @@
+name: Server Security Audit
+
+on:
+  schedule:
+    # Run every 12 hours at 6 AM and 6 PM UTC
+    - cron: '0 6,18 * * *'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly
+
+      - name: Setup cargo cache registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install cargo deny
+        run: cargo install --locked cargo-deny
+
+      - name: Scan dependencies
+        run: cargo deny check all -s
