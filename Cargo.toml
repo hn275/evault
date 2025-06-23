@@ -1,10 +1,3 @@
-[package]
-name = "evault"
-version = "0.1.0"
-edition = "2024"
-
 [workspace]
 members = ["server"]
-
-[dependencies]
-bytes = "1.10.1"
+resolver = "2"
