@@ -90,6 +90,13 @@ impl Redis {
             .hgetall::<_, HashMap<String, String>>(&key)
             .context("Failed to deserialize authentication session.")?;
 
+        if result.is_empty() {
+            Err(AppError::Response(
+                StatusCode::UNAUTHORIZED,
+                String::from("Authentication failed."),
+            ))?
+        }
+
         let _: () = conn
             .del(key)
             .context("Failed to remove authentication session.")?;
