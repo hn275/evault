@@ -28,6 +28,8 @@ services:
       - "traefik.http.services.server.loadbalancer.server.port=8000"
     volumes:
       - ./server/src:/evault_server/src
+      - ./server/Cargo.toml:/evault_server/Cargo.toml
+      - ./server/Cargo.lock:/evault_server/Cargo.lock
       - server-data:/evault_server/target
     env_file: ".env"
     depends_on:
