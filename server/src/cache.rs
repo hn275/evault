@@ -22,7 +22,7 @@ pub struct RedisAuthSession {
 }
 
 #[derive(Debug, Clone)]
-pub struct UserSession {
+pub struct UserSessionInternal {
     pub session_id: String,
     pub user_id: u64,
     pub token: GitHubAuthToken,
@@ -32,9 +32,10 @@ pub struct UserSession {
     pub user_avatar_url: String,
     #[allow(unused)]
     pub user_name: String,
+    pub user_login: String,
 }
 
-impl FromRedisValue for UserSession {
+impl FromRedisValue for UserSessionInternal {
     fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Self> {
         let m: HashMap<String, String> = HashMap::from_redis_value(v)?;
         if m.is_empty() {
@@ -43,30 +44,21 @@ impl FromRedisValue for UserSession {
                 "Empty hash data",
             )));
         }
-        Ok(UserSession {
-            session_id: String::default(), // since the session id is the key
-            user_id: m
-                .get("user.id")
-                .expect("`user.id` not found.")
-                .parse::<_>()
-                .unwrap(),
+
+        let p = |key: &str| m.get(key).expect(&format!("key {} not found in map.", key));
+
+        Ok(UserSessionInternal {
+            // since the session id is the key, this is not saved in the map
+            session_id: String::default(),
+            user_id: p("user.id").parse::<_>().unwrap(),
+            user_avatar_url: p("user.avatar_url").to_string(),
+            user_name: p("user.name").to_string(),
+            user_login: p("user.login").to_string(),
             token: GitHubAuthToken {
-                access_token: m
-                    .get("token.value")
-                    .expect("`token.value` not found.")
-                    .to_owned()
-                    .into(),
-                token_type: m
-                    .get("token.type")
-                    .expect("`token.type` not found.")
-                    .to_string(),
-                scope: m
-                    .get("token.scope")
-                    .expect("`token.scope` not found.")
-                    .to_owned(),
+                access_token: p("token.value").to_string().into(),
+                token_type: p("token.type").to_string(),
+                scope: p("token.scope").to_string(),
             },
-            user_avatar_url: String::default(),
-            user_name: String::default(),
         })
     }
 }
@@ -154,7 +146,7 @@ impl Redis {
         })
     }
 
-    pub fn create_user_session(&self, session: &UserSession, ttl: u64) -> Result<()> {
+    pub fn create_user_session(&self, session: &UserSessionInternal, ttl: u64) -> Result<()> {
         let key = Self::make_user_session_key(&session.session_id);
         let opts = redis::HashFieldExpirationOptions::default()
             .set_existence_check(redis::FieldExistenceCheck::FNX)
@@ -169,6 +161,9 @@ impl Redis {
                 &opts,
                 &[
                     ("user.id", session.user_id.to_redis_args()),
+                    ("user.avatar_url", session.user_avatar_url.to_redis_args()),
+                    ("user.name", session.user_name.to_redis_args()),
+                    ("user.login", session.user_login.to_redis_args()),
                     (
                         "token.value",
                         session.token.access_token.expose_secret().to_redis_args(),
@@ -191,12 +186,12 @@ impl Redis {
         Ok(())
     }
 
-    pub fn get_user_session(&self, session_id: &str) -> Result<UserSession> {
+    pub fn get_user_session(&self, session_id: &str) -> Result<UserSessionInternal> {
         let mut user_session = self
             .pool
             .get()
             .context("")?
-            .hgetall::<_, UserSession>(Self::make_user_session_key(session_id))
+            .hgetall::<_, UserSessionInternal>(Self::make_user_session_key(session_id))
             .map_err(|err| match err.kind() {
                 redis::ErrorKind::TypeError => {
                     AppError::Response(StatusCode::FORBIDDEN, "Session expired.".to_owned())

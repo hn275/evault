@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 use crate::{
     app::AppState,
-    cache::{EVAULT_SESSION_TTL, RedisAuthSession, UserSession},
+    cache::{EVAULT_SESSION_TTL, RedisAuthSession, UserSessionInternal},
     errors::{AppError, Result},
     github::GITHUB_OAUTH_STATE_TTL,
     handlers::COOKIE_ACCESS_TOKEN_KEY,
@@ -73,11 +73,12 @@ pub async fn auth_token(
     let user_profile = app.github.fetch_user_profile(&github_oauth_token).await?;
     let evault_access_token = secrets::token_urlsafe(32)?;
 
-    let user_session = UserSession {
+    let user_session = UserSessionInternal {
         session_id: evault_access_token,
         user_id: user_profile.id,
         user_name: user_profile.name.clone(),
         user_avatar_url: user_profile.avatar_url.clone(),
+        user_login: user_profile.login.clone(),
         token: github_oauth_token,
     };
 

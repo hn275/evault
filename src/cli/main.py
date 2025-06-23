@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import time, json
 from typing import Optional, Tuple
-from urllib.parse import urlencode, urlparse, parse_qs
+    from urllib.parse import urlencode, urlparse, parse_qs
 import requests, argparse, pathlib
 from .repository import parse_remotes
 from ..pkg.types import GithubAuthToken, AuthDataDevice, GitHubUser

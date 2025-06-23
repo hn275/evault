@@ -10,8 +10,7 @@ use axum::{
 use axum_extra::extract::CookieJar;
 use serde_json::json;
 
-use crate::errors::Result;
-use crate::{app::AppState, errors::AppError, handlers::COOKIE_ACCESS_TOKEN_KEY};
+use crate::{app::AppState, handlers::COOKIE_ACCESS_TOKEN_KEY};
 
 pub async fn authenticated_requests(
     State(app): State<Arc<AppState>>,
@@ -29,7 +28,7 @@ pub async fn authenticated_requests(
             .into_response();
     };
 
-    // TODO: test to see if the cookie is expired
+    // TODO: test to see if the cookie is expired (do i even have to?)
 
     match app.redis.get_user_session(auth_cookie.value()) {
         Ok(user_session) => {

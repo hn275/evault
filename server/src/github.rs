@@ -4,9 +4,10 @@ use anyhow::Context;
 use reqwest::StatusCode;
 use reqwest::header::{ACCEPT, AUTHORIZATION, HeaderValue, USER_AGENT};
 use secrecy::{ExposeSecret, SecretString};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::cache::UserSessionInternal;
 use crate::errors::{AppError, Result};
 use crate::utils::env::{env_or_default, env_or_panic};
 
@@ -20,7 +21,7 @@ pub struct GitHubAuthToken {
     pub scope: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct GitHubUserProfile {
     pub id: u64,
     pub login: String,
