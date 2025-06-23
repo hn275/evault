@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use axum::http::StatusCode;
-use redis::{Commands, ToRedisArgs};
+use redis::{Commands, FromRedisValue, ToRedisArgs};
 use redis_macros::{FromRedisValue, ToRedisArgs};
 use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
@@ -21,7 +21,7 @@ pub struct RedisAuthSession {
     pub device_type: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UserSession {
     pub session_id: String,
     pub user_id: u64,
@@ -32,6 +32,43 @@ pub struct UserSession {
     pub user_avatar_url: String,
     #[allow(unused)]
     pub user_name: String,
+}
+
+impl FromRedisValue for UserSession {
+    fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Self> {
+        let m: HashMap<String, String> = HashMap::from_redis_value(v)?;
+        if m.is_empty() {
+            return Err(redis::RedisError::from((
+                redis::ErrorKind::TypeError,
+                "Empty hash data",
+            )));
+        }
+        Ok(UserSession {
+            session_id: String::default(), // since the session id is the key
+            user_id: m
+                .get("user.id")
+                .expect("`user.id` not found.")
+                .parse::<_>()
+                .unwrap(),
+            token: GitHubAuthToken {
+                access_token: m
+                    .get("token.value")
+                    .expect("`token.value` not found.")
+                    .to_owned()
+                    .into(),
+                token_type: m
+                    .get("token.type")
+                    .expect("`token.type` not found.")
+                    .to_string(),
+                scope: m
+                    .get("token.scope")
+                    .expect("`token.scope` not found.")
+                    .to_owned(),
+            },
+            user_avatar_url: String::default(),
+            user_name: String::default(),
+        })
+    }
 }
 
 pub struct Redis {
@@ -152,6 +189,24 @@ impl Redis {
             })?;
 
         Ok(())
+    }
+
+    pub fn get_user_session(&self, session_id: &str) -> Result<UserSession> {
+        let mut user_session = self
+            .pool
+            .get()
+            .context("")?
+            .hgetall::<_, UserSession>(Self::make_user_session_key(session_id))
+            .map_err(|err| match err.kind() {
+                redis::ErrorKind::TypeError => {
+                    AppError::Response(StatusCode::FORBIDDEN, "Session expired.".to_owned())
+                }
+                _ => AppError::Internal(err.into()),
+            })?;
+
+        user_session.session_id = session_id.to_owned();
+
+        Ok(user_session)
     }
 
     fn make_auth_url_key(session_id: &str) -> String {

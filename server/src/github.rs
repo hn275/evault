@@ -13,7 +13,7 @@ use crate::utils::env::{env_or_default, env_or_panic};
 const GITHUB_OAUTH_SCOPE: &'static str = "repo read:user";
 pub const GITHUB_OAUTH_STATE_TTL: u64 = 120; // 2 minutes
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct GitHubAuthToken {
     pub access_token: SecretString,
     pub token_type: String,
