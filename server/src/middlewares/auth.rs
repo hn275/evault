@@ -34,6 +34,7 @@ pub async fn authenticated_requests(
     match app.redis.get_user_session(auth_cookie.value()) {
         Ok(user_session) => {
             request.extensions_mut().insert(user_session);
+            // TODO: extend the session.
             next.run(request).await
         }
         Err(err) => err.into_response(),
