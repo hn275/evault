@@ -16,5 +16,5 @@ export async function getUser(): Promise<User> {
 // Exchange the GitHub authentication
 export async function getGitHubAuth(oauthParams: GitHubOAuthSearchParams) {
   const p = new URLSearchParams(oauthParams);
-  return httpClient.get(`/github/auth/token?${p.toString()}`);
+  return httpClient.get(`/auth/token?${p.toString()}`);
 }
