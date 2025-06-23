@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use reqwest::StatusCode;
-use reqwest::header::{ACCEPT, AUTHORIZATION, HeaderValue, USER_AGENT};
+use reqwest::header::{ACCEPT, AUTHORIZATION, HeaderName, HeaderValue, USER_AGENT};
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -30,10 +30,29 @@ pub struct GitHubUserProfile {
     pub avatar_url: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RepoOwner {
+    id: u64,
+    login: String,
+    avatar_url: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Repository {
+    id: u64,
+    full_name: String,
+    private: bool,
+    html_url: String,
+    description: Option<String>,
+    owner: RepoOwner,
+}
+
 pub struct GitHubAPI {
     oauth_client_id: String,
     oauth_client_secret: SecretString,
     oauth_redirect_uri: String,
+
+    base_api: Url,
 
     http: reqwest::Client,
 }
@@ -58,6 +77,8 @@ impl GitHubAPI {
             .build()
             .unwrap();
 
+        let base_api = Url::parse("https://api.github.com").expect("Invalid URL.");
+
         Self {
             oauth_client_id: env_or_panic("GITHUB_OAUTH_CLIENT_ID"),
             oauth_client_secret: env_or_panic("GITHUB_OAUTH_CLIENT_SECRET").into(),
@@ -65,6 +86,8 @@ impl GitHubAPI {
                 "GITHUB_OAUTH_REDIRECT_URI",
                 "http://localhost:5173/auth/github",
             ),
+
+            base_api,
 
             http,
         }
@@ -125,6 +148,46 @@ impl GitHubAPI {
             .json::<GitHubUserProfile>()
             .await
             .context("Failed to parse GitHub user profile response")?)
+    }
+
+    pub async fn fetch_user_repositories(
+        &self,
+        token: &GitHubAuthToken,
+    ) -> Result<Vec<Repository>> {
+        let mut url = self.base_api.clone();
+        url.path_segments_mut()
+            .expect("invalid base url")
+            .push("user")
+            .push("repos");
+        url.query_pairs_mut()
+            .append_pair("sort", "pushed")
+            .append_pair("direction", "desc");
+
+        let token_str = format!(
+            "{} {}",
+            token.token_type,
+            token.access_token.expose_secret()
+        );
+        let repos = self
+            .http
+            .get(url)
+            .header(AUTHORIZATION, token_str)
+            .send()
+            .await
+            .unwrap()
+            .error_for_status()
+            .map_err(|err| {
+                let status = err.status().unwrap_or_else(|| StatusCode::BAD_GATEWAY);
+                AppError::Response(
+                    status,
+                    "Failed to get repositories from GitHub.".to_string(),
+                )
+            })?
+            .json::<Vec<Repository>>()
+            .await
+            .context("Failed to marshalized repositories")?;
+
+        Ok(repos)
     }
 
     fn make_github_oauth_url(&self, code: &str) -> Result<String> {

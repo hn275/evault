@@ -32,7 +32,7 @@ mod utils;
 use utils::{Stage, env};
 
 use crate::{
-    handlers::{dashboard_handlers, user_handlers},
+    handlers::{repo_handlers, user_handlers},
     middlewares::auth::authenticated_requests,
 };
 use handlers::auth_handlers;
@@ -75,8 +75,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/auth", get(auth_handlers::auth))
         .route("/auth/token", get(auth_handlers::auth_token));
 
-    let dashboard_router = Router::new()
-        .route("/dashboard", get(dashboard_handlers::user))
+    let repo_router = Router::new()
+        .route("/repositories", get(repo_handlers::repositories))
         .layer(from_fn_with_state(Arc::clone(&app), authenticated_requests));
 
     let user_router = Router::new()
@@ -94,7 +94,7 @@ async fn main() -> anyhow::Result<()> {
             "/api/github",
             Router::new()
                 .merge(auth_router)
-                .merge(dashboard_router)
+                .merge(repo_router)
                 .merge(user_router),
         )
         .with_state(app)
