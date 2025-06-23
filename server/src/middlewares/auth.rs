@@ -1,16 +1,14 @@
 use std::sync::Arc;
 
 use axum::{
-    Json,
     extract::{Request, State},
     http::StatusCode,
     middleware::Next,
     response::{IntoResponse, Response},
 };
 use axum_extra::extract::CookieJar;
-use serde_json::json;
 
-use crate::{app::AppState, handlers::COOKIE_ACCESS_TOKEN_KEY};
+use crate::{app::AppState, errors::AppError, handlers::COOKIE_ACCESS_TOKEN_KEY};
 
 pub async fn authenticated_requests(
     State(app): State<Arc<AppState>>,
@@ -21,10 +19,7 @@ pub async fn authenticated_requests(
     let auth_cookie = if let Some(cookie) = cookie_jar.get(COOKIE_ACCESS_TOKEN_KEY) {
         cookie
     } else {
-        return (
-            StatusCode::FORBIDDEN,
-            Json(json!({"detail": "Missing credentials."})),
-        )
+        return AppError::Response(StatusCode::FORBIDDEN, "Missing credentials.".to_string())
             .into_response();
     };
 
