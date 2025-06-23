@@ -31,7 +31,10 @@ mod utils;
 
 use utils::{Stage, env};
 
-use crate::{handlers::dashboard_handlers, middlewares::auth::authenticated_requests};
+use crate::{
+    handlers::{dashboard_handlers, user_handlers},
+    middlewares::auth::authenticated_requests,
+};
 use handlers::auth_handlers;
 
 #[tokio::main]
@@ -73,10 +76,11 @@ async fn main() -> anyhow::Result<()> {
         .route("/auth/token", get(auth_handlers::auth_token));
 
     let dashboard_router = Router::new()
-        .nest(
-            "/dashboard",
-            Router::new().route("/user", get(dashboard_handlers::user)),
-        )
+        .route("/dashboard", get(dashboard_handlers::user))
+        .layer(from_fn_with_state(Arc::clone(&app), authenticated_requests));
+
+    let user_router = Router::new()
+        .route("/user", get(user_handlers::user))
         .layer(from_fn_with_state(Arc::clone(&app), authenticated_requests));
 
     // main router
@@ -88,7 +92,10 @@ async fn main() -> anyhow::Result<()> {
     let router = Router::new()
         .nest(
             "/api/github",
-            Router::new().merge(auth_router).merge(dashboard_router),
+            Router::new()
+                .merge(auth_router)
+                .merge(dashboard_router)
+                .merge(user_router),
         )
         .with_state(app)
         .layer(cors)
