@@ -1,13 +1,14 @@
 use std::sync::Arc;
 
 use axum::{
+    Json,
     extract::{Request, State},
-    http::{HeaderMap, Response, StatusCode},
-    middleware::{self, Next},
-    response::IntoResponse,
+    http::StatusCode,
+    middleware::Next,
+    response::{IntoResponse, Response},
 };
 use axum_extra::extract::CookieJar;
-use tracing::{trace, warn};
+use serde_json::json;
 
 use crate::errors::Result;
 use crate::{app::AppState, errors::AppError, handlers::COOKIE_ACCESS_TOKEN_KEY};
@@ -17,12 +18,24 @@ pub async fn authenticated_requests(
     cookie_jar: CookieJar,
     mut request: Request,
     next: Next,
-) -> Result<impl IntoResponse> {
-    let auth_cookie = cookie_jar.get(COOKIE_ACCESS_TOKEN_KEY).ok_or_else(|| {
-        AppError::Response(StatusCode::FORBIDDEN, String::from("Missing credentials."))
-    })?;
+) -> Response {
+    let auth_cookie = if let Some(cookie) = cookie_jar.get(COOKIE_ACCESS_TOKEN_KEY) {
+        cookie
+    } else {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(json!({"detail": "Missing credentials."})),
+        )
+            .into_response();
+    };
 
-    let user_session_id = auth_cookie.value();
-    dbg!(&user_session_id);
-    Ok("")
+    // TODO: test to see if the cookie is expired
+
+    match app.redis.get_user_session(auth_cookie.value()) {
+        Ok(user_session) => {
+            request.extensions_mut().insert(user_session);
+            next.run(request).await
+        }
+        Err(err) => err.into_response(),
+    }
 }
