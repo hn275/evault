@@ -1,6 +1,7 @@
 name: Server Security Audit
 
 on:
+  push:
   schedule:
     # Run every 12 hours at 6 AM and 6 PM UTC
     - cron: '0 6,18 * * *'
