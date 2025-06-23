@@ -1,11 +1,21 @@
 use anyhow::Context;
-use sqlx::{PgPool, Pool, Postgres};
-use tracing::info;
+use serde::{Deserialize, Serialize};
+use sqlx::{PgPool, Pool, Postgres, Row, prelude::FromRow};
+use tracing::{error, info};
 
-use crate::{github::GitHubUserProfile, utils::env::env_or_panic};
+use crate::{errors::Result, github::GitHubUserProfile, utils::env::env_or_panic};
 
 pub struct Database {
     pool: Pool<Postgres>,
+}
+
+#[derive(FromRow, Serialize, Deserialize)]
+pub struct Repository {
+    pub id: i64,
+    pub name: String,
+    pub owner_id: i64,
+    pub bucket_addr: Option<String>,
+    pub password: String,
 }
 
 impl Database {
@@ -29,7 +39,7 @@ impl Database {
         Ok(Database { pool })
     }
 
-    pub async fn create_github_user(&self, user: &GitHubUserProfile) -> anyhow::Result<()> {
+    pub async fn create_github_user(&self, user: &GitHubUserProfile) -> Result<()> {
         sqlx::query(
             "
             INSERT INTO users (id, login, email, name)
@@ -47,9 +57,22 @@ impl Database {
         .bind(&user.name)
         .execute(&self.pool)
         .await
-        .unwrap();
-        // .context("Failed to create GitHub user.")?;
+        .context("Failed to create GitHub user.")?;
 
         Ok(())
+    }
+
+    pub async fn get_repo_by_id(&self, repo_id: u64) -> Result<Option<Repository>> {
+        Ok(sqlx::query_as::<_, Repository>(
+            "
+            SELECT id, name, owner_id, bucket_addr, password
+            FROM repositories
+            WHERE id = $1;
+            ",
+        )
+        .bind(repo_id as i64)
+        .fetch_optional(&self.pool)
+        .await
+        .context("Failed to query for repository")?)
     }
 }

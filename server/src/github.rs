@@ -23,7 +23,7 @@ pub struct GitHubAuthToken {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GitHubUserProfile {
-    pub id: u64,
+    pub id: i64,
     pub login: String,
     pub name: String,
     pub email: Option<String>,

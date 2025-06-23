@@ -77,6 +77,7 @@ async fn main() -> anyhow::Result<()> {
 
     let repo_router = Router::new()
         .route("/repositories", get(repo_handlers::repositories))
+        .route("/repository", get(repo_handlers::repository))
         .layer(from_fn_with_state(Arc::clone(&app), authenticated_requests));
 
     let user_router = Router::new()
