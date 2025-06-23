@@ -13,6 +13,7 @@ use crate::{
     cache::{EVAULT_SESSION_TTL, RedisAuthSession, UserSession},
     errors::{AppError, Result},
     github::GITHUB_OAUTH_STATE_TTL,
+    handlers::COOKIE_ACCESS_TOKEN_KEY,
     secrets,
 };
 
@@ -48,6 +49,7 @@ pub async fn auth(
 #[derive(Deserialize)]
 pub struct TokenQuery {
     session_id: String,
+    #[allow(unused)] // TODO: add support for CLI login
     device_type: String,
     code: String,
     state: String,
@@ -84,7 +86,9 @@ pub async fn auth_token(
 
     app.database.create_github_user(&user_profile).await?;
 
-    let session_cookie = Cookie::build(("evault_access_token", user_session.session_id)).build();
+    let session_cookie = Cookie::build((COOKIE_ACCESS_TOKEN_KEY, user_session.session_id))
+        .path("/")
+        .build();
 
     let jar = cookie_jar.add(session_cookie);
 

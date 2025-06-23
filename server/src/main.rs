@@ -5,6 +5,7 @@ use app::AppState;
 use axum::{
     Router,
     http::{Method, header},
+    middleware::from_fn_with_state,
     routing::get,
 };
 use cache::Redis;
@@ -24,10 +25,14 @@ mod database;
 mod errors;
 mod github;
 mod handlers;
+mod middlewares;
 mod secrets;
 mod utils;
 
 use utils::{Stage, env};
+
+use crate::{handlers::dashboard_handlers, middlewares::auth::authenticated_requests};
+use handlers::auth_handlers;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -63,10 +68,16 @@ async fn main() -> anyhow::Result<()> {
 
     // build router
     // nested router, path prefix `/api/github`
-    let github_router = Router::new()
-        .route("/auth", get(handlers::auth::auth))
-        .route("/auth/token", get(handlers::auth::auth_token))
-        .with_state(app);
+    let auth_router = Router::new()
+        .route("/auth", get(auth_handlers::auth))
+        .route("/auth/token", get(auth_handlers::auth_token));
+
+    let dashboard_router = Router::new()
+        .nest(
+            "/dashboard",
+            Router::new().route("/user", get(dashboard_handlers::user)),
+        )
+        .layer(from_fn_with_state(Arc::clone(&app), authenticated_requests));
 
     // main router
     let cors = CorsLayer::new()
@@ -75,7 +86,11 @@ async fn main() -> anyhow::Result<()> {
         .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
 
     let router = Router::new()
-        .nest("/api/github", github_router)
+        .nest(
+            "/api/github",
+            Router::new().merge(auth_router).merge(dashboard_router),
+        )
+        .with_state(app)
         .layer(cors)
         .layer(TraceLayer::new_for_http());
 

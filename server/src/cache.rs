@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use anyhow::{Context, anyhow};
+use anyhow::Context;
 use axum::http::StatusCode;
 use redis::{Commands, ToRedisArgs};
 use redis_macros::{FromRedisValue, ToRedisArgs};
@@ -25,9 +25,13 @@ pub struct RedisAuthSession {
 pub struct UserSession {
     pub session_id: String,
     pub user_id: u64,
-    pub user_avatar_url: String,
-    pub user_name: String,
     pub token: GitHubAuthToken,
+
+    // these are served to the client side, but we don't really need to read these
+    #[allow(unused)]
+    pub user_avatar_url: String,
+    #[allow(unused)]
+    pub user_name: String,
 }
 
 pub struct Redis {
