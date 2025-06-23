@@ -9,35 +9,27 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]
+        rust-toolchain: ["stable", "nightly"]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up Rust toolchain - ${{ matrix.rust-toolchain }}
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          python-version: ${{ matrix.python-version }}
+          toolchain: ${{ matrix.rust-toolchain }}
+          components: rustfmt, clippy
 
-      - name: Install dependencies
+      - name: Run code formatting
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run format checker
-        run: |
-          pip install black
-          black --check --diff . || \
-            (echo "Bad formatting, run 'black .'" && exit 1)
+          cargo fmt -- --check --verbose || 
+            (echo "Bad formatting, run 'cargo fmt'"; exit 1)
 
       - name: Run lint
-        run: |
-          pip install pylint
-          pylint --verbose --errors-only .
+        run: cargo clippy --all-features
 
-      - name: Run tests
-        run: |
-          pip install pytest
-          pytest -s
+      - name: Run test
+        run: cargo test
 
-
+      - name: Run build
+        run: cargo build --all-features
