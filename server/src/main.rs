@@ -10,7 +10,6 @@ use axum::{
 };
 use cache::Redis;
 use database::Database;
-use dotenv::dotenv;
 use github::GitHubAPI;
 use tower_http::{
     cors::{Any, CorsLayer},
@@ -39,7 +38,6 @@ use handlers::auth_handlers;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let _ = dotenv();
     // configure logging
     let stage = Stage::read_from_env()?;
     let log_cfg = match stage {
