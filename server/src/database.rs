@@ -1,7 +1,7 @@
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Pool, Postgres, Row, prelude::FromRow};
-use tracing::{error, info};
+use sqlx::{PgPool, Pool, Postgres, prelude::FromRow};
+use tracing::info;
 
 use crate::{errors::Result, github::GitHubUserProfile, utils::env::env_or_panic};
 
@@ -11,9 +11,9 @@ pub struct Database {
 
 #[derive(FromRow, Serialize, Deserialize)]
 pub struct Repository {
-    pub id: i64,
+    pub id: i32,
     pub name: String,
-    pub owner_id: i64,
+    pub owner_id: i32,
     pub bucket_addr: Option<String>,
     pub password: String,
 }

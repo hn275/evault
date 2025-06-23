@@ -32,8 +32,7 @@ pub struct RepositoryQuery {
 #[derive(Serialize, Deserialize)]
 pub struct RepositoryResponse {
     pub vault_initialized: bool,
-    pub read_access: bool,
-    pub write_access: bool,
+    is_admin: bool,
 }
 
 pub async fn repository(
@@ -50,25 +49,20 @@ pub async fn repository(
 
     // if the vault for this repo is initialized
     if let Some(repo) = repository {
-        if repo.owner_id == user.user_id {
-            return Ok(Json(RepositoryResponse {
-                vault_initialized: true,
-                read_access: true,
-                write_access: true,
-            }));
-        }
-
-        // TODO: not repo owner, need to check for read/write access.
         return Ok(Json(RepositoryResponse {
             vault_initialized: true,
-            read_access: false,
-            write_access: false,
+            is_admin: repo.owner_id as u64 == user.user_id,
         }));
     }
 
+    // vault not initialized, need to verify the request to be the repo owner
+    let remote_repo = app
+        .github
+        .fetch_repository(&user.token, &query.repo_owner, &query.repo_name)
+        .await?;
+
     Ok(Json(RepositoryResponse {
         vault_initialized: false,
-        read_access: false,
-        write_access: false,
+        is_admin: remote_repo.owner.id as u64 == user.user_id,
     }))
 }

@@ -7,8 +7,9 @@ export async function getRepositoryByIDWithOwnerValidation(
   repoID: number,
   repoFullName: string,
 ): Promise<Status> {
+  const [repoOwner, repoName] = repoFullName.split("/");
   const r = await fetchWithRedirect(
-    `/api/github/repository/${repoID}?repo=${repoFullName}`,
+    `/api/github/repository?repo_owner=${repoOwner}&repo_name=${repoName}&repo_id=${repoID}`,
   );
   return { id: repoID, status: r.status };
 }

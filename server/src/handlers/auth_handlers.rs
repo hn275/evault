@@ -75,7 +75,7 @@ pub async fn auth_token(
 
     let user_session = UserSessionInternal {
         session_id: evault_access_token,
-        user_id: user_profile.id,
+        user_id: user_profile.id as u64,
         user_name: user_profile.name.clone(),
         user_avatar_url: user_profile.avatar_url.clone(),
         user_login: user_profile.login.clone(),

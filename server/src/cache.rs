@@ -24,7 +24,7 @@ pub struct RedisAuthSession {
 #[derive(Debug, Clone)]
 pub struct UserSessionInternal {
     pub session_id: String,
-    pub user_id: i64,
+    pub user_id: u64,
     pub token: GitHubAuthToken,
 
     // these are served to the client side, but we don't really need to read these

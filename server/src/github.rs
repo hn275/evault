@@ -2,12 +2,13 @@ use std::time::Duration;
 
 use anyhow::Context;
 use reqwest::StatusCode;
-use reqwest::header::{ACCEPT, AUTHORIZATION, HeaderName, HeaderValue, USER_AGENT};
+use reqwest::header::{ACCEPT, AUTHORIZATION, HeaderValue, USER_AGENT};
 use secrecy::{ExposeSecret, SecretString};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use tracing::error;
 use url::Url;
 
-use crate::cache::UserSessionInternal;
 use crate::errors::{AppError, Result};
 use crate::utils::env::{env_or_default, env_or_panic};
 
@@ -21,9 +22,19 @@ pub struct GitHubAuthToken {
     pub scope: String,
 }
 
+impl GitHubAuthToken {
+    pub fn make_header_string(&self) -> SecretString {
+        SecretString::from(format!(
+            "{} {}",
+            self.token_type,
+            self.access_token.expose_secret()
+        ))
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GitHubUserProfile {
-    pub id: i64,
+    pub id: u64,
     pub login: String,
     pub name: String,
     pub email: Option<String>,
@@ -32,19 +43,19 @@ pub struct GitHubUserProfile {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RepoOwner {
-    id: u64,
-    login: String,
-    avatar_url: String,
+    pub id: i64,
+    pub login: String,
+    pub avatar_url: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Repository {
-    id: u64,
-    full_name: String,
-    private: bool,
-    html_url: String,
-    description: Option<String>,
-    owner: RepoOwner,
+    pub id: i64,
+    pub full_name: String,
+    pub private: bool,
+    pub html_url: String,
+    pub description: Option<String>,
+    pub owner: RepoOwner,
 }
 
 pub struct GitHubAPI {
@@ -162,32 +173,54 @@ impl GitHubAPI {
         url.query_pairs_mut()
             .append_pair("sort", "pushed")
             .append_pair("direction", "desc");
+        self.send_get::<Vec<Repository>>(url, token).await
+    }
 
-        let token_str = format!(
-            "{} {}",
-            token.token_type,
-            token.access_token.expose_secret()
-        );
-        let repos = self
+    pub async fn fetch_repository(
+        &self,
+        token: &GitHubAuthToken,
+        repo_owner: &str,
+        repo_name: &str,
+    ) -> Result<Repository> {
+        let mut url = self.base_api.clone();
+        url.path_segments_mut()
+            .expect("invalid base url")
+            .push("repos")
+            .push(repo_owner)
+            .push(repo_name);
+        self.send_get::<Repository>(url, token).await
+    }
+
+    async fn send_get<'a, T: DeserializeOwned>(
+        &self,
+        url: Url,
+        token: &'a GitHubAuthToken,
+    ) -> Result<T> {
+        let response = self
             .http
             .get(url)
-            .header(AUTHORIZATION, token_str)
+            .header(AUTHORIZATION, token.make_header_string().expose_secret())
             .send()
             .await
-            .unwrap()
-            .error_for_status()
-            .map_err(|err| {
-                let status = err.status().unwrap_or_else(|| StatusCode::BAD_GATEWAY);
-                AppError::Response(
-                    status,
-                    "Failed to get repositories from GitHub.".to_string(),
-                )
-            })?
-            .json::<Vec<Repository>>()
-            .await
-            .context("Failed to marshalized repositories")?;
+            .context("Request failed.")?;
 
-        Ok(repos)
+        let status_code = response.status();
+        match status_code {
+            StatusCode::OK => Ok(response
+                .json::<T>()
+                .await
+                .context("Failed to serialize to struct.")?),
+            _ => {
+                error!(
+                    "GitHub API error: {}",
+                    response.text().await.expect("failed to read response body")
+                );
+                Err(AppError::Response(
+                    status_code,
+                    "GitHub request failed.".to_string(),
+                ))
+            }
+        }
     }
 
     fn make_github_oauth_url(&self, code: &str) -> Result<String> {
