@@ -6,7 +6,7 @@ use axum::{
     Router,
     http::{Method, header},
     middleware::from_fn_with_state,
-    routing::get,
+    routing::{get, post},
 };
 use cache::Redis;
 use database::Database;
@@ -75,7 +75,10 @@ async fn main() -> anyhow::Result<()> {
 
     let repo_router = Router::new()
         .route("/repositories", get(repo_handlers::repositories))
-        .route("/repository", get(repo_handlers::repository))
+        .route(
+            "/repository",
+            get(repo_handlers::repository).post(repo_handlers::repository_new),
+        )
         .layer(from_fn_with_state(Arc::clone(&app), authenticated_requests));
 
     let user_router = Router::new()

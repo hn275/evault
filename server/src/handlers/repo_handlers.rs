@@ -9,6 +9,7 @@ use crate::app::AppState;
 use crate::cache::UserSessionInternal;
 use crate::errors::Result;
 
+// GET /api/github/repositories
 pub async fn repositories(
     State(app): State<Arc<AppState>>,
     request: Request,
@@ -22,6 +23,7 @@ pub async fn repositories(
     Ok(Json(repos))
 }
 
+// GET /api/github/repository
 #[derive(Serialize, Deserialize)]
 pub struct RepositoryQuery {
     pub repo_owner: String,
@@ -65,4 +67,24 @@ pub async fn repository(
         vault_initialized: false,
         is_admin: remote_repo.owner.id as u64 == user.user_id,
     }))
+}
+
+// POST /api/github/repository
+pub struct RepositoryNewQuery {
+    repo_id: i64,
+    password: String,
+    repo_fullname: String,
+}
+
+pub async fn repository_new(
+    State(app): State<Arc<AppState>>,
+    Query(query): Query<RepositoryQuery>,
+    request: Request,
+) -> Result<impl IntoResponse> {
+    let user = request
+        .extensions()
+        .get::<UserSessionInternal>()
+        .expect("Missing authentication middleware in the stack.");
+
+    Ok("".to_string())
 }
