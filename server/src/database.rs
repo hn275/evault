@@ -1,6 +1,6 @@
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Pool, Postgres, prelude::FromRow};
+use sqlx::{PgPool, Pool, Postgres, migrate::Migrator, prelude::FromRow};
 use tracing::info;
 
 use crate::{errors::Result, github::GitHubUserProfile, utils::env::env_or_panic};
@@ -18,6 +18,8 @@ pub struct Repository {
     pub password: String,
 }
 
+static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
+
 impl Database {
     pub async fn new() -> anyhow::Result<Self> {
         let conn_str = format!(
@@ -34,7 +36,11 @@ impl Database {
             .await
             .context("Failed to connect to database.")?;
 
-        info!("Connected to PostGres database.");
+        info!("Connected to PostGreSQL database.");
+
+        MIGRATOR.run(&pool).await?;
+
+        info!("Database migrated.");
 
         Ok(Database { pool })
     }
