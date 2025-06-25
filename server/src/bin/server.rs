@@ -1,16 +1,12 @@
 use std::{net::SocketAddr, sync::Arc};
 
 use anyhow::Context;
-use app::AppState;
 use axum::{
     Router,
     http::{Method, header},
     middleware::from_fn_with_state,
-    routing::{get, post},
+    routing::get,
 };
-use cache::Redis;
-use database::Database;
-use github::GitHubAPI;
 use tower_http::{
     cors::{Any, CorsLayer},
     trace::TraceLayer,
@@ -18,23 +14,14 @@ use tower_http::{
 use tracing::info;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
-mod app;
-mod cache;
-mod database;
-mod errors;
-mod github;
-mod handlers;
-mod middlewares;
-mod secrets;
-mod utils;
-
-use utils::{Stage, env};
-
-use crate::{
-    handlers::{repo_handlers, user_handlers},
-    middlewares::auth::authenticated_requests,
-};
-use handlers::auth_handlers;
+use server::app::AppState;
+use server::cache::Redis;
+use server::database::Database;
+use server::github::GitHubAPI;
+use server::handlers::auth_handlers;
+use server::handlers::{repo_handlers, user_handlers};
+use server::middlewares::auth::authenticated_requests;
+use server::utils::{Stage, env};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

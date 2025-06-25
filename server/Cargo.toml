@@ -4,9 +4,6 @@ license = "GPL-3.0"
 version = "0.1.0"
 edition = "2024"
 
-[[bin]]
-name = "server"
-path = "src/main.rs"
 
 [dependencies]
 tokio = { version = "1.45.1", features = ["rt-multi-thread", "net", "macros"] }

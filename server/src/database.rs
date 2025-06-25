@@ -36,12 +36,6 @@ impl Database {
 
         info!("Connected to PostGres database.");
 
-        sqlx::migrate!("./server/migrations")
-            .run(&pool)
-            .await
-            .expect("Error running DB migrations");
-        info!("PostGres database migrated.");
-
         Ok(Database { pool })
     }
 

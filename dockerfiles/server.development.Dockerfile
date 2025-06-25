@@ -9,4 +9,4 @@ RUN apt update && apt upgrade -y && apt install -y pkg-config libssl-dev
 RUN cargo install cargo-watch --locked
 
 EXPOSE 8000
-CMD ["cargo", "watch", "-x", "run"]
+CMD ["cargo", "watch", "-x", "run --bin server"]
