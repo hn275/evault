@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 from fastapi import HTTPException, status
 import sqlalchemy as sql
 from sqlalchemy.exc import IntegrityError
@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
 from .models import Repository, User
 from loguru import logger
-from src.server.config import (
+from .config import (
     PSQL_DBNAME,
     PSQL_HOST,
     PSQL_PORT,
