@@ -10,9 +10,7 @@ Note: that there is a CI for Python 3.12 and 3.13, any other versions are not te
 1. Install all project deps. Reminder to activate your virtual environment.
 
 ```sh
-# install all deps, including the project
-pip install -e .
-pip install -r requirements.txt
+uv sync
 ```
 
 2. Migrate database to the latest revision.
@@ -24,9 +22,7 @@ alembic upgrade head
 3. Start server
 
 ```sh
-fastapi dev src/server/main.py
-# or there is an alias (for bash environment) for convenience
-fastapi dev server
+uv run fastapi dev server/main.py
 ```
 
 There's a Docker Compose `compose.yml` file for Redis + PostGreSQL server.
