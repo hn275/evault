@@ -5,7 +5,7 @@ from loguru import logger
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 from fastapi import HTTPException, status
-from src.pkg.types import GitHubUser, GithubAuthToken
+from ..types import GitHubUser, GithubAuthToken
 
 
 @dataclass
