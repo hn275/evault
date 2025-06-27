@@ -1,8 +1,8 @@
 from dataclasses import asdict
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from src.server.middlewares.auth import access_token_extractor
-from src.server import cache
+from ..middlewares.auth import access_token_extractor
+from .. import cache
 from starlette.status import HTTP_200_OK
 
 router = APIRouter(

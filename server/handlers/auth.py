@@ -16,14 +16,14 @@ from starlette.status import (
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
 )
-from src.server.config import EVAULT_WEB_URL
-from src.server.config import EVAULT_TOKEN_POLL_TTL
-from src.server.config import GITHUB_OAUTH_STATE_TTL
-from src.server.config import EVAULT_SESSION_TOKEN_TTL
-from src.server.config import EVAULT_TOKEN_POLL_MAX_ATTEMPT
-from src.server import cache, database as db
-from src.server.github import oauth as gh_oauth, client as gh_client
-from src.pkg.types import DeviceType, UserSession
+from ..config import EVAULT_WEB_URL
+from ..config import EVAULT_TOKEN_POLL_TTL
+from ..config import GITHUB_OAUTH_STATE_TTL
+from ..config import EVAULT_SESSION_TOKEN_TTL
+from ..config import EVAULT_TOKEN_POLL_MAX_ATTEMPT
+from .. import cache, database as db
+from ..github import oauth as gh_oauth, client as gh_client
+from ..types import DeviceType, UserSession
 
 router = APIRouter(prefix="/api/github/auth", dependencies=[])
 

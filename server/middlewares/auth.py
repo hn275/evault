@@ -1,6 +1,6 @@
 from fastapi import Cookie, HTTPException, status
-from evault.src.server.config import EVAULT_SESSION_TOKEN_TTL
-from src.server import cache
+from ..config import EVAULT_SESSION_TOKEN_TTL
+from .. import cache
 
 
 def access_token_extractor(
