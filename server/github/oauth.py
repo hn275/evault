@@ -1,6 +1,6 @@
 from urllib.parse import urlencode
-from src.pkg.types import DeviceType
-from src.server.config import (
+from ..types import DeviceType
+from ..config import (
     GITHUB_OAUTH_CLIENT_ID,
     GITHUB_OAUTH_CLIENT_SECRET,
     GITHUB_OAUTH_REDIRECT_URI,

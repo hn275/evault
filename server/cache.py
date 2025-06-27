@@ -1,8 +1,8 @@
 from redis import Redis
 from loguru import logger
 from fastapi import HTTPException, status
-from src.server.config import REDIS_HOST, REDIS_PORT_DEFAULT
-from src.pkg.types import UserSession
+from .config import REDIS_HOST, REDIS_PORT_DEFAULT
+from .types import UserSession
 
 
 _redis = Redis(REDIS_HOST, port=REDIS_PORT_DEFAULT)

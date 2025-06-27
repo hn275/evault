@@ -1,6 +1,6 @@
 import dotenv
 import os
-from src.pkg.utils import env_or_default
+from .utils import env_or_default
 
 dotenv.load_dotenv()
 

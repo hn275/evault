@@ -3,7 +3,9 @@ name = "evault"
 version = "0.1.0"
 description = "Shareable vault for environment variables"
 authors = [{ name = "Hal Nguyen", email = "haln_01@proton.me" }]
-dependencies = []
+dependencies = [
+    "loguru>=0.7.3",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
