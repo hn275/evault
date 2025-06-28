@@ -28,15 +28,15 @@ jobs:
       - name: Run format checker
         run: |
           uv add black
-          black --check --diff . || \
+          uv run black --check --diff . || \
             (echo "Bad formatting, run 'black .'" && exit 1)
 
       - name: Run lint
         run: |
           uv add pylint
-          pylint --verbose --errors-only .
+          uv run pylint --verbose --errors-only .
 
       - name: Run tests
         run: |
           uv add pytest
-          pytest -s
+          uv run pytest -s
