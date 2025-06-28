@@ -3,7 +3,7 @@ name = "evault"
 version = "0.1.0"
 description = "Shareable vault for environment variables"
 authors = [{ name = "Hal Nguyen", email = "haln_01@proton.me" }]
-requires-python = "==3.13"
+requires-python = "==3.13.*"
 dependencies = [
   "alembic==1.16.1",
   "annotated-types==0.7.0",
