@@ -45,7 +45,7 @@ export function useAuthGithub() {
       console.error(params.error);
     } else if (status === "success") {
       // setting CSRF token
-      const csrfToken = data;
+      const csrfToken = data.data;
       httpClient.defaults.headers.common["X-CSRF-Token"] = csrfToken;
       nav({ to: "/dashboard" });
     } else if (status === "error") {
