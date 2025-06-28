@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -22,23 +22,21 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r <(grep -v "^-e git+ssh" requirements.txt)
-          pip install -e .
+          pip install uv
+          uv sync
 
       - name: Run format checker
         run: |
-          pip install black
+          uv add black
           black --check --diff . || \
             (echo "Bad formatting, run 'black .'" && exit 1)
 
       - name: Run lint
         run: |
-          pip install pylint
+          uv add pylint
           pylint --verbose --errors-only .
 
       - name: Run tests
         run: |
-          pip install pytest
+          uv add pytest
           pytest -s
-
-

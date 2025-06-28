@@ -62,8 +62,8 @@ def get_repository(
         user_session = cache.get_user_session(evault_access_token)
 
         remote_repository = httpclient.fetch_repository(
-            user_session.token.token_type,
-            user_session.token.access_token,
+            user_session.gh_token.token_type,
+            user_session.gh_token.access_token,
             owner,
             repo_name,
         )
