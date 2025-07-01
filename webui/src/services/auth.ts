@@ -6,6 +6,7 @@ import type { GitHubOAuthSearchParams } from "../utils/zod/gitHubParams";
 export async function getUser(): Promise<User> {
   const r = await httpClient.get("/dashboard/user", {
     transformResponse: (data) => {
+      // TODO: add zod type validation
       return JSON.parse(data);
     },
   });
