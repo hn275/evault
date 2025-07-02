@@ -1,25 +1,54 @@
 services:
 
+  traefik:
+    container_name: evault-traefik
+    image: traefik:v3.4
+    ports:
+      - "5173:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - server
+      - webui
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+
   server:
-      container_name: evault-server
-      build:
-        context: .
-        dockerfile: ./dockerfiles/server.dev.Dockerfile
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.server.rule=PathPrefix(`/api`)"
-        - "traefik.http.routers.server.entrypoints=web"
-        - "traefik.http.services.server.loadbalancer.server.port=8000"
-      volumes:
-        - .:/evault_server
-      env_file: ".env"
-      depends_on:
-        - redis
-        - postgres
+    container_name: evault-server
+    build:
+      context: .
+      dockerfile: ./dockerfiles/server.dev.Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.server.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.server.entrypoints=web"
+      - "traefik.http.services.server.loadbalancer.server.port=8000"
+    volumes:
+      - ./server:/evault_server/server
+    env_file: ".env"
+    depends_on:
+      - redis
+      - postgres
+  
+  webui:
+    container_name: evault-webui
+    build:
+      context: ./webui
+      dockerfile: ../dockerfiles/webui.dev.Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webui.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.webui.entrypoints=web"
+      - "traefik.http.services.webui.loadbalancer.server.port=5173"
+    volumes:
+      - ./webui/src:/evault_webui/src
     
   redis:
-    image: redis:8.0.2-alpine
     container_name: evault-redis
+    image: redis:8.0.2-alpine
     ports:
       - "6379:6379"
     volumes:
@@ -29,8 +58,8 @@ services:
       - REDIS_REPLICATION_MODE=master
 
   postgres:
-    image: postgres:17.5-alpine3.22
     container_name: evault-postgres
+    image: postgres:17.5-alpine3.22
     ports:
       - "5432:5432"
     volumes:

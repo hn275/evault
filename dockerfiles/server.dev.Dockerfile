@@ -6,8 +6,12 @@ RUN apt-get update && apt-get install -y gcc python3-dev libpq-dev
 
 RUN pip install uv
 
-COPY . .
+COPY server server
+COPY pyproject.toml .
+COPY uv.lock .
 
 RUN uv sync
 
-CMD ["uv", "run", "fastapi", "dev", "server/main.py"]
+EXPOSE 8000
+
+CMD ["uv", "run", "fastapi", "dev", "--host", "0.0.0.0", "--port", "8000", "server/main.py"]
