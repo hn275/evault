@@ -7,7 +7,6 @@ import {
 import { Breadcrumbs } from "../../../components/common/Breadcrumbs";
 import { NewVault } from "../../../components/dashboard/repository/NewVaultForm";
 import { useState } from "react";
-import { Button } from "@mui/material";
 import { useNotifications } from "@toolpad/core/useNotifications";
 import { getRepositoryByIDWithOwnerValidation } from "../../../services/repository";
 
@@ -105,12 +104,11 @@ function RouteComponent() {
         <>Vault found.</>
       ) : repoID.status === 404 ? (
         <>
-          <Button
-            variant="contained"
+          <button
             onClick={() => setNewVaultDialogOpen(true)}
           >
             Create Vault
-          </Button>
+          </button>
         </>
       ) : (
         <>Something went wrong.</>
