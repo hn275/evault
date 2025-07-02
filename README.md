@@ -9,6 +9,22 @@ We're using [`uv`](https://docs.astral.sh/uv/) for python development.
 
 Note: that there is a CI for Python 3.12 and 3.13, any other versions are not tested and may not work.
 
+## Docker
+
+The recommended way is to use docker compose.
+
+```sh
+docker compose up
+```
+
+First time running, the database will need to be migrated.
+
+```sh
+uv run alembic upgrade head
+```
+
+## Run it locally
+
 1. Creating/using a virtual environment
 
 ```sh
@@ -25,7 +41,7 @@ uv sync
 3. Migrate database to the latest revision.
 
 ```sh
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
 4. Start server
