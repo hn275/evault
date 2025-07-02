@@ -4,7 +4,6 @@ import {
   useLoaderData,
   useSearch,
 } from "@tanstack/react-router";
-import { Breadcrumbs } from "../../../components/common/Breadcrumbs";
 import { NewVault } from "../../../components/dashboard/repository/NewVaultForm";
 import { useState } from "react";
 import { Button } from "@mui/material";
@@ -63,15 +62,8 @@ function RouteComponent() {
     );
   }
 
-  // TODO: Breadcrumbs should be a common layout route
-  const breadcrumbs = [
-    { display: "Dashboard", href: "/dashboard" },
-    { display: repoFullName, href: `https://github.com/${repoFullName}` },
-  ];
-
   return (
     <>
-      <Breadcrumbs paths={breadcrumbs} />
       <NewVault
         repoID={repoID.id}
         repoFullName={repoFullName}

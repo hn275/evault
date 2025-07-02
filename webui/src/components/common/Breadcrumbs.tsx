@@ -1,4 +1,4 @@
-import { Breadcrumbs as MUIBreadcrumbs, Link } from "@mui/material";
+import { Breadcrumbs as MUIBreadcrumbs, Link, type Theme, type SxProps } from "@mui/material";
 
 type PathProps = {
   display: string;
@@ -7,12 +7,12 @@ type PathProps = {
 
 type BreadcrumbsProps = {
   paths: PathProps[];
+  sx?: SxProps<Theme>;
 };
 
-export function Breadcrumbs({ paths }: BreadcrumbsProps) {
+export function Breadcrumbs({ paths, ...props }: BreadcrumbsProps) {
   return (
-    <div role="presentation">
-      <MUIBreadcrumbs aria-label="breadcrumb">
+      <MUIBreadcrumbs aria-label="breadcrumb" {...props}>
         {paths.map((path) => (
           <Link
             underline="hover"
@@ -24,6 +24,5 @@ export function Breadcrumbs({ paths }: BreadcrumbsProps) {
           </Link>
         ))}
       </MUIBreadcrumbs>
-    </div>
   );
 }
