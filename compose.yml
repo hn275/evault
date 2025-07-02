@@ -1,4 +1,22 @@
 services:
+
+  server:
+      container_name: evault-server
+      build:
+        context: .
+        dockerfile: ./dockerfiles/server.dev.Dockerfile
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.server.rule=PathPrefix(`/api`)"
+        - "traefik.http.routers.server.entrypoints=web"
+        - "traefik.http.services.server.loadbalancer.server.port=8000"
+      volumes:
+        - .:/evault_server
+      env_file: ".env"
+      depends_on:
+        - redis
+        - postgres
+    
   redis:
     image: redis:8.0.2-alpine
     container_name: evault-redis
