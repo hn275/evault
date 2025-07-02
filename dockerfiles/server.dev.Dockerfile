@@ -1,12 +1,12 @@
 FROM python:3.14-rc-bullseye
 
-WORKDIR /evault
+WORKDIR /evault_server
+
+RUN apt-get update && apt-get install -y gcc python3-dev libpq-dev 
 
 RUN pip install uv
 
-COPY pyproject.toml .
-COPY uv.lock .
-COPY server server
+COPY . .
 
 RUN uv sync
 
