@@ -5,21 +5,30 @@
 
 # Getting Started
 
+We're using [`uv`](https://docs.astral.sh/uv/) for python development.
+
 Note: that there is a CI for Python 3.12 and 3.13, any other versions are not tested and may not work.
 
-1. Install all project deps. Reminder to activate your virtual environment.
+1. Creating/using a virtual environment
+
+```sh
+uv venv --python 3.13 # creating a venv for python 3.13
+uv venv # sourcing the environment
+```
+
+2. Install all project deps. Reminder to activate your virtual environment.
 
 ```sh
 uv sync
 ```
 
-2. Migrate database to the latest revision.
+3. Migrate database to the latest revision.
 
 ```sh
 alembic upgrade head
 ```
 
-3. Start server
+4. Start server
 
 ```sh
 uv run fastapi dev server/main.py
