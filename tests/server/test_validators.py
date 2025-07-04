@@ -1,4 +1,4 @@
-from src.server.validators import valid_user_repo_string
+from server.validators import valid_user_repo_string
 
 
 def test_validate_user_repo_string():

@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 from urllib.parse import urlencode, urlparse, parse_qs
 import requests, argparse, pathlib
 from .repository import parse_remotes
-from ..pkg.types import GithubAuthToken, AuthDataDevice, GitHubUser
+from server.types import GithubAuthToken, AuthDataDevice, GitHubUser
 
 
 CREDENTIALS_PATH = pathlib.Path("/tmp/evault-access-token")  # TODO: change this path

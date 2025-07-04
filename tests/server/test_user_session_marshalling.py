@@ -1,4 +1,4 @@
-from src.pkg.types import GitHubUser, GithubAuthToken, UserSession
+from server.types import GitHubUser, GithubAuthToken, UserSession
 from copy import deepcopy
 
 test_data = {

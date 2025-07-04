@@ -5,41 +5,58 @@
 
 # Getting Started
 
-Install all project deps.
+We're using [`uv`](https://docs.astral.sh/uv/) for python development.
+
+Note: that there is a CI for Python 3.12 and 3.13, any other versions are not tested and may not work.
+
+## Docker
+
+The recommended way is to use docker compose.
 
 ```sh
-# NOTE: if running into importing issue, install the project as a module on
-# your machine
-pip install -e .
-
-# install all deps
-pip install -r requirements.txt
+docker compose up
 ```
 
-Migrate database to the latest revision.
+First time running, the database will need to be migrated.
 
 ```sh
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
-Start server
+## Run it locally
+
+1. Creating/using a virtual environment
 
 ```sh
-fastapi dev src/server/main.py
+uv venv --python 3.13 # creating a venv for python 3.13
+uv venv # sourcing the environment
+```
+
+2. Install all project deps. Reminder to activate your virtual environment.
+
+```sh
+uv sync
+```
+
+3. Migrate database to the latest revision.
+
+```sh
+uv run alembic upgrade head
+```
+
+4. Start server
+
+```sh
+uv run fastapi dev server/main.py
 ```
 
 There's a Docker Compose `compose.yml` file for Redis + PostGreSQL server.
 Mapping to the ports 5432 and 6379 respectively.
 
 ```sh
-docker compose up
+docker compose up -d
 ```
 
 # Documentations
 
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [Alembic](https://alembic.sqlalchemy.org/en/latest/index.html) - database migration
-- [Alchemy](https://docs.sqlalchemy.org/en/20/orm/quickstart.html) - ORM (comes with Alembic)
-- [PyCryptodome](https://pycryptodome.readthedocs.io/en/latest/src/cipher/chacha20_poly1305.html) for XChaCha20-Poly1305
-- [redis-py](https://redis.readthedocs.io/en/stable/index.html)
 - [GitHub REST API](https://docs.github.com/en/rest/repos?apiVersion=2022-11-28)

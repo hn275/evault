@@ -62,7 +62,7 @@ function useHome() {
     // NOTE: can't do `fetch` here because the server is redirecting the request
     // to the OAuth provider (GitHub), with `fetch`, browser blocks the redirect.
     // this way the browser itself is making the `GET` request to be redirected.
-    window.location.href = "/api/auth?device_type=web";
+    window.location.href = "/api/github/auth?device_type=web";
   }
 
   return { signInRedirect };
