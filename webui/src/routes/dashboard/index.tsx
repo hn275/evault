@@ -7,6 +7,13 @@ import { RepositoryList } from "../../components/dashboard/RepositoryList";
 import { LoaderWithText } from "../../components/common/LoaderWithText";
 
 export const Route = createFileRoute("/dashboard/")({
+  head: () => ({
+    meta: [
+      {
+        title: "Dashboard | Evault",
+      },
+    ],
+  }),
   component: RouteComponent,
 });
 
@@ -16,7 +23,7 @@ function RouteComponent() {
 
   return (
     <Box display="flex" flexDirection="column" gap={1}>
-      {user ? (
+      {user && repos ? (
         <>
           <Breadcrumbs paths={[{ display: "Dashboard", href: "/dashboard" }]} />
 

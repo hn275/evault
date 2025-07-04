@@ -2,6 +2,13 @@ import { Box, Button, Container, CssBaseline, Typography } from "@mui/material";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      {
+        title: "Evault",
+      },
+    ],
+  }),
   component: App,
 });
 

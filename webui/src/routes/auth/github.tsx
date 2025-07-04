@@ -19,6 +19,13 @@ const loadingTexts = [
 ];
 
 export const Route = createFileRoute("/auth/github")({
+  head: () => ({
+    meta: [
+      {
+        title: "Authenticating with GitHub | Evault",
+      },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>): GitHubOAuthSearchParamResult =>
     paramParser.safeParse(s),
   component: RouteComponent,

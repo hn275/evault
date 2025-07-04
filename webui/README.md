@@ -114,3 +114,7 @@ The following are guidelines for what goes where within the code base, please no
 
 - Less than 5 style overrides: props declared styles
 - More than 5 or props declared styles not available: sx prop object
+
+### Guidelines for new routes
+
+- Any new routes **MUST** have a declared title under head property of the route declaration.

@@ -15,9 +15,25 @@ type SearchParams = {
   repo: string;
 };
 
+// Since we are using the search params to validate repo owner, we need to create a title based on the search params
+// This can be updated to the global state to fetch the repository name once that is implemented
+const createTitleBasedOnSearchParams = (search: string) => {
+  const repo = new URLSearchParams(search).get("repo");
+  return repo ? `${repo} | Evault` : "Repository | Evault";
+};
+
 export const Route = createFileRoute("/dashboard/repository/$repoID")({
+  head: () => ({
+    meta: [
+      {
+        title: createTitleBasedOnSearchParams(window.location.search),
+      },
+    ],
+  }),
   component: RouteComponent,
   loader: async ({ params }) => {
+    // TODO: Instead of passing the search params to the loader, we should use a global state to store the repo name
+    // and then use that state to fetch the repository
     const search = new URLSearchParams(window.location.search);
     const repoFullName = search.get("repo") as string;
     const r = await getRepositoryByIDWithOwnerValidation(
