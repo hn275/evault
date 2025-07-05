@@ -1,4 +1,4 @@
-import { Box, Button, Container, CssBaseline, Typography } from "@mui/material";
+import { Button } from "@/components/ui/button";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
@@ -16,44 +16,27 @@ function App() {
   const h = useHome();
 
   return (
-    <>
-      <CssBaseline />
-      <Box sx={{ backgroundColor: "#0d1117", py: 8 }}>
-        <Container maxWidth="md" sx={{ textAlign: "center" }}>
-          <Typography
-            variant="h1"
-            component="h1"
-            sx={{ mb: 3, maxWidth: 600, mx: "auto", color: "text.primary" }}
-          >
+      <div className="bg-background pt-[30vh] h-screen">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-3 max-w-[600px] mx-auto text-primary">
             Manage all your repo secrets in one place
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              fontSize: "1.25rem",
-              mb: 4,
-              maxWidth: 500,
-              mx: "auto",
-              color: "text.secondary",
-            }}
-          >
+          </h1>
+          <p className="text-lg mb-4 max-w-[500px] mx-auto text-muted-foreground">
             Store and access your envs in one place, integrated with your GitHub
             access.
-          </Typography>
-          <Box sx={{ maxWidth: 400, mx: "auto", mb: 3 }}>
+          </p>
+          <div className="max-w-[400px] mx-auto mb-3">
             <Button
-              variant="contained"
-              size="large"
-              fullWidth
-              sx={{ py: 1.5, fontSize: "1rem", fontWeight: 500 }}
+              variant="default"
+              size="lg"
+              className="w-full"
               onClick={h.signInRedirect}
             >
               Login with GitHub
             </Button>
-          </Box>
-        </Container>
-      </Box>
-    </>
+          </div>
+        </div>
+      </div>
   );
 }
 

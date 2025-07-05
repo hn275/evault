@@ -1,10 +1,11 @@
-import { Avatar, Box, Stack, Typography } from "@mui/material";
 import { createFileRoute } from "@tanstack/react-router";
 import { Breadcrumbs } from "../../components/common/Breadcrumbs";
 import { useUser } from "../../hooks/auth";
 import { useRepository } from "../../hooks/repository";
 import { RepositoryList } from "../../components/dashboard/RepositoryList";
-import { LoaderWithText } from "../../components/common/LoaderWithText";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RepositoryCardSkeleton } from "@/components/dashboard/RepositoryCardSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({
@@ -22,43 +23,41 @@ function RouteComponent() {
   const { repos } = useRepository();
 
   return (
-    <Box display="flex" flexDirection="column" gap={1}>
+    <div className="flex flex-col gap-1">
+      <Breadcrumbs paths={[{ display: "Dashboard", href: "/dashboard" }]} />
       {user && repos ? (
         <>
-          <Breadcrumbs paths={[{ display: "Dashboard", href: "/dashboard" }]} />
-
-          <Box display="flex" alignItems="center" gap={2}>
-            <Avatar src={user.avatar_url} alt={user.name} />
-            <Stack>
-              <Typography
-                fontWeight={500}
-                fontSize="1.2em"
-                color="text.primary"
-              >
-                {user.name}
-              </Typography>
-              <Typography
-                fontWeight={400}
-                fontSize="0.8em"
-                color="text.secondary"
-              >
-                {user.login}
-              </Typography>
-            </Stack>
+          <div className="flex items-center gap-2">
+            <Avatar>
+              <AvatarImage src={user.avatar_url} />
+              <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <p className="font-medium text-lg">{user.name}</p>
+              <p className="text-sm text-muted-foreground">{user.login}</p>
+            </div>
             {/* <p>Email: {user.email}</p> */}
-          </Box>
+          </div>
 
           <section>
             {repos ? (
               <RepositoryList repositories={repos} />
             ) : (
-              <LoaderWithText text="Fetching Repos..." />
+              [...Array(10)].map((_, index) => (
+                <RepositoryCardSkeleton key={index} />
+              ))
             )}
           </section>
         </>
       ) : (
-        <LoaderWithText text="Loading..." />
+        <div className="flex items-center space-x-4">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[250px]" />
+            <Skeleton className="h-4 w-[200px]" />
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

@@ -8,7 +8,7 @@ from .. import cache
 from .. import database as db
 from ..validators import valid_user_repo_string
 from ..middlewares.auth import access_token_extractor
-from .. import crypto
+from ..crypto import passwordhash
 
 
 router = APIRouter(
@@ -124,7 +124,7 @@ def create_new_repository(
             detail="Invalid repository.",
         )
 
-    digest = crypto.passwordhash.hash(password)
+    digest = passwordhash.hash(password)
     db.create_new_repository(
         repo_id=repo_id,
         owner_id=repository.owner.id,

@@ -7,8 +7,9 @@ import {
 import { Breadcrumbs } from "../../../components/common/Breadcrumbs";
 import { NewVault } from "../../../components/dashboard/repository/NewVaultForm";
 import { useState } from "react";
-import { useNotifications } from "@toolpad/core/useNotifications";
 import { getRepositoryByIDWithOwnerValidation } from "../../../services/repository";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 type SearchParams = {
   repo: string;
@@ -48,7 +49,6 @@ export const Route = createFileRoute("/dashboard/repository/$repoID")({
 });
 
 function RouteComponent() {
-  const notifications = useNotifications();
   const repoID = useLoaderData({ from: "/dashboard/repository/$repoID" });
   const { repo: repoFullName } = useSearch({
     from: "/dashboard/repository/$repoID",
@@ -59,23 +59,11 @@ function RouteComponent() {
   );
 
   if (repoID.status === 403) {
-    notifications.show(
-      "You are not authorized to create a vault for this repository.",
-      {
-        severity: "error",
-        autoHideDuration: 3000,
-      },
-    );
+    toast.error("You are not authorized to create a vault for this repository.");
   }
 
   if (repoID.status === 403) {
-    notifications.show(
-      "You are not authorized to create a vault for this repository.",
-      {
-        severity: "error",
-        autoHideDuration: 3000,
-      },
-    );
+    toast.error("You are not authorized to create a vault for this repository.");
   }
 
   // TODO: Breadcrumbs should be a common layout route
@@ -104,11 +92,12 @@ function RouteComponent() {
         <>Vault found.</>
       ) : repoID.status === 404 ? (
         <>
-          <button
+          <Button
+            variant="default"
             onClick={() => setNewVaultDialogOpen(true)}
           >
             Create Vault
-          </button>
+          </Button>
         </>
       ) : (
         <>Something went wrong.</>
