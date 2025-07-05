@@ -59,11 +59,15 @@ function RouteComponent() {
   );
 
   if (repoID.status === 403) {
-    toast.error("You are not authorized to create a vault for this repository.");
+    toast.error(
+      "You are not authorized to create a vault for this repository.",
+    );
   }
 
   if (repoID.status === 403) {
-    toast.error("You are not authorized to create a vault for this repository.");
+    toast.error(
+      "You are not authorized to create a vault for this repository.",
+    );
   }
 
   // TODO: Breadcrumbs should be a common layout route
@@ -92,10 +96,7 @@ function RouteComponent() {
         <>Vault found.</>
       ) : repoID.status === 404 ? (
         <>
-          <Button
-            variant="default"
-            onClick={() => setNewVaultDialogOpen(true)}
-          >
+          <Button variant="default" onClick={() => setNewVaultDialogOpen(true)}>
             Create Vault
           </Button>
         </>

@@ -47,18 +47,18 @@ The ShadCN UI setup is configured through `components.json`:
 
 The following ShadCN UI components are currently available in `/src/components/ui/`:
 
-| Component | File | Description |
-|-----------|------|-------------|
-| **Avatar** | `avatar.tsx` | User profile pictures with fallback |
-| **Badge** | `badge.tsx` | Status indicators and labels |
-| **Breadcrumb** | `breadcrumb.tsx` | Navigation path display |
-| **Button** | `button.tsx` | Clickable actions with variants |
-| **Dialog** | `dialog.tsx` | Modal dialogs and overlays |
-| **Input** | `input.tsx` | Text input fields |
-| **Progress** | `progress.tsx` | Progress bars and indicators |
-| **Skeleton** | `skeleton.tsx` | Loading state placeholders |
-| **Spinner** | `spinner.tsx` | Loading indicators |
-| **Toaster** | `sonner.tsx` | Toast notifications |
+| Component      | File             | Description                         |
+| -------------- | ---------------- | ----------------------------------- |
+| **Avatar**     | `avatar.tsx`     | User profile pictures with fallback |
+| **Badge**      | `badge.tsx`      | Status indicators and labels        |
+| **Breadcrumb** | `breadcrumb.tsx` | Navigation path display             |
+| **Button**     | `button.tsx`     | Clickable actions with variants     |
+| **Dialog**     | `dialog.tsx`     | Modal dialogs and overlays          |
+| **Input**      | `input.tsx`      | Text input fields                   |
+| **Progress**   | `progress.tsx`   | Progress bars and indicators        |
+| **Skeleton**   | `skeleton.tsx`   | Loading state placeholders          |
+| **Spinner**    | `spinner.tsx`    | Loading indicators                  |
+| **Toaster**    | `sonner.tsx`     | Toast notifications                 |
 
 ### Theme System
 
@@ -100,12 +100,17 @@ The theme system uses CSS custom properties defined in `src/index.css`:
 ```tsx
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Basic usage
 <Button variant="default" size="sm">
   Click me
-</Button>
+</Button>;
 ```
 
 #### Component Composition
@@ -122,14 +127,14 @@ Complex components are built by composing multiple ShadCN primitives:
         Please enter a password to create a new vault.
       </DialogDescription>
     </DialogHeader>
-    
+
     <Input
       type="password"
       className="my-1"
       value={password}
       onChange={(e) => setPassword(e.target.value)}
     />
-    
+
     <DialogFooter>
       <Button variant="default" type="submit">
         Submit
@@ -160,20 +165,21 @@ Components use `class-variance-authority` (CVA) for variant management:
 ```
 
 #### Custom Styling
+
 Use the `cn()` utility function for conditional classes:
 
 ```tsx
 import { cn } from "@/lib/utils";
 
-<Button 
+<Button
   className={cn(
     "custom-class",
     isLoading && "opacity-50",
-    variant === "special" && "bg-gradient-to-r from-blue-500 to-purple-600"
+    variant === "special" && "bg-gradient-to-r from-blue-500 to-purple-600",
   )}
 >
   Custom Button
-</Button>
+</Button>;
 ```
 
 ### Architecture Integration
@@ -183,12 +189,12 @@ import { cn } from "@/lib/utils";
 ```md
 src/
 ├── components/
-│   ├── ui/              # ShadCN UI components
-│   ├── common/          # Shared app components
-│   └── dashboard/       # Feature-specific components
+│ ├── ui/ # ShadCN UI components
+│ ├── common/ # Shared app components
+│ └── dashboard/ # Feature-specific components
 ├── lib/
-│   └── utils.ts         # Utility functions (cn, etc.)
-└── routes/              # Route components
+│ └── utils.ts # Utility functions (cn, etc.)
+└── routes/ # Route components
 ```
 
 #### Import Patterns
@@ -255,7 +261,7 @@ import {
       <BreadcrumbLink href="/repository">Repository</BreadcrumbLink>
     </BreadcrumbItem>
   </BreadcrumbList>
-</Breadcrumb>
+</Breadcrumb>;
 ```
 
 #### User Profile Display
@@ -267,7 +273,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 <Avatar>
   <AvatarImage src={user.avatar_url} alt={user.name} />
   <AvatarFallback>{user.name[0]}</AvatarFallback>
-</Avatar>
+</Avatar>;
 ```
 
 #### Loading States
@@ -280,14 +286,14 @@ import { Skeleton } from "@/components/ui/skeleton";
   <Skeleton className="h-4 w-full" />
   <Skeleton className="h-4 w-3/4" />
   <Skeleton className="h-4 w-1/2" />
-</div>
+</div>;
 
 // Loading spinner
 import { Spinner } from "@/components/ui/spinner";
 
 <Spinner size="medium" show={isLoading}>
   Loading...
-</Spinner>
+</Spinner>;
 ```
 
 ### Customization and Extension
@@ -306,8 +312,8 @@ Modify CSS variables in `src/index.css` to customize the theme:
 
 ```css
 :root {
-  --radius: 0.5rem;        /* Adjust border radius */
-  --primary: oklch(0.3 0.2 250);  /* Change primary color */
+  --radius: 0.5rem; /* Adjust border radius */
+  --primary: oklch(0.3 0.2 250); /* Change primary color */
 }
 ```
 
@@ -326,7 +332,7 @@ const buttonVariants = cva(
         custom: "bg-gradient-to-r from-pink-500 to-violet-500",
       },
     },
-  }
+  },
 );
 ```
 
@@ -354,18 +360,15 @@ The following are guidelines for what goes where within the code base, please no
 - `/src/routes/` - Contains all route components and their associated logic
 
 - `/src/components/` - Reusable UI components
-
   - `/dashboard/` - Dashboard-specific components
   - `/common/` - Shared components used across multiple features
 
 - `/src/services/` - API and service layer
-
   - `common.ts` - Shared service utilities
 
 - `/src/hooks/` - Custom React hooks
 
 - `/src/utils/` - Utility functions and helpers
-
   - `/zod/` - Zod schema definitions and parsers
 
 - `/src/types/` - TypeScript type definitions
@@ -373,26 +376,22 @@ The following are guidelines for what goes where within the code base, please no
 ### File Organization Principles
 
 1. **Route Components**
-
    - Keep route components simple and focused on routing logic
    - Try to put all business logics to hooks
    - Delegate complex UI to separate components
    - Queries should be declared here, unless we really need it in the route components
 
 2. **Components**
-
    - Route-specific components go in the corresponding folder path
    - Keep components small and focused on a single responsibility
    - On mutations should be declared on the route-specific components, queries should be very rarely needed to be declared here
 
 3. **Services**
-
    - One service file per data type (ie. repository, auth)
    - Keep API calls and data transformation logic here
    - Use common utilities for shared functionality (ie. if we need to add a redirect to all authenticated API calls)
 
 4. **Hooks**
-
    - Extract reusable logic into custom hooks
    - Group related hooks by feature
    - Keep hooks focused on a single concern
