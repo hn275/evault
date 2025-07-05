@@ -9,9 +9,9 @@ export const Route = createRootRoute({
     <QueryClientProvider client={queryClient}>
       <HeadContent />
 
-        <Toaster position="top-right" duration={3000} richColors />
-        <Outlet />
-        <TanStackRouterDevtools />
+      <Toaster position="top-right" duration={3000} richColors />
+      <Outlet />
+      <TanStackRouterDevtools />
     </QueryClientProvider>
   ),
 });

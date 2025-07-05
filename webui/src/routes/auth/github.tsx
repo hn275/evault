@@ -47,9 +47,7 @@ function ErrorState() {
   return (
     <div className="pt-[30vh] mx-auto w-max flex flex-col items-center gap-1 h-screen">
       <h4 className="text-2xl">Authentication Failed</h4>
-      <Link to="/">
-        Go back home.
-      </Link>
+      <Link to="/">Go back home.</Link>
     </div>
   );
 }
@@ -59,9 +57,7 @@ function LoadingState() {
 
   return (
     <div className="pt-[30vh] mx-auto w-max flex flex-col items-center gap-4 h-screen">
-      <h4 className="text-2xl">
-        Authenticating with GitHub
-      </h4>
+      <h4 className="text-2xl">Authenticating with GitHub</h4>
 
       <div className="flex flex-col items-center gap-2">
         <Spinner size="large" />
@@ -74,9 +70,7 @@ function LoadingState() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
               >
-                <p className="text-sm text-muted-foreground">
-                  {text}
-                </p>
+                <p className="text-sm text-muted-foreground">{text}</p>
               </motion.div>
             ) : null;
           })}

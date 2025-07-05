@@ -18,13 +18,13 @@ export function RepositoryList({
   };
 
   const itemVariants = {
-    hidden: { 
-      opacity: 0, 
-      y: 20 // Start 20px down
+    hidden: {
+      opacity: 0,
+      y: 20, // Start 20px down
     },
-    visible: { 
-      opacity: 1, 
-      y: 0
+    visible: {
+      opacity: 1,
+      y: 0,
     },
   };
 
@@ -36,10 +36,7 @@ export function RepositoryList({
       animate="visible"
     >
       {repositories.map((repo) => (
-        <motion.div
-          key={repo.id}
-          variants={itemVariants}
-        >
+        <motion.div key={repo.id} variants={itemVariants}>
           <RepositoryCard repo={repo} />
         </motion.div>
       ))}
