@@ -5,6 +5,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Fragment } from "react/jsx-runtime";
 
 type PathProps = {
   display: string;
@@ -20,7 +21,7 @@ export function Breadcrumbs({ paths }: BreadcrumbsProps) {
     <Breadcrumb>
       <BreadcrumbList>
         {paths.map((path) => (
-          <>
+          <Fragment key={path.href}>
             <BreadcrumbItem>
               <BreadcrumbLink
                 href={path.href}
@@ -30,7 +31,7 @@ export function Breadcrumbs({ paths }: BreadcrumbsProps) {
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
-          </>
+          </Fragment>
         ))}
       </BreadcrumbList>
     </Breadcrumb>
