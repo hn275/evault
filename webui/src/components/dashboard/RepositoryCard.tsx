@@ -1,87 +1,55 @@
-import { Box, Button, Chip, Typography } from "@mui/material";
 import type { Repository } from "../../types/Repository";
 import { Link } from "@tanstack/react-router";
-import { Public, Lock } from "@mui/icons-material";
+import { Badge } from "../ui/badge";
+import { Globe, Lock } from "lucide-react";
+import { Button } from "../ui/button";
+import { Card, CardContent } from "../ui/card";
 
 export function RepositoryCard({ repo }: { repo: Repository }) {
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        py: 3,
-        borderBottom: "1px solid #2e353c",
-      }}
-    >
-      <Box sx={{ flexGrow: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-          <Typography
-            variant="h6"
-            component="a"
-            href={`https://github.com/${repo.full_name}`}
-            sx={{
-              textDecoration: "none",
-              color: "primary.main",
-              fontWeight: 600,
-              fontSize: "1.125rem",
-              "&:hover": {
-                textDecoration: "underline",
-              },
-            }}
-          >
-            {repo.full_name}
-          </Typography>
-          <Chip
-            label={repo.private ? "Private" : "Public"}
-            size="small"
-            icon={
-              repo.private ? (
-                <Lock sx={{ fontSize: 12 }} />
+    <Card className="flex justify-between items-start py-3 border-b border-border">
+      <CardContent className="flex flex-row justify-between w-full">
+        <div className="flex-grow">
+          <div className="flex items-center gap-1 mb-1">
+            <Link
+              to="/dashboard/repository/$repoID"
+              params={{ repoID: `${repo.id}` }}
+              search={{ repo: repo.full_name }}
+            >
+              <p className="text-lg font-semibold text-primary hover:underline">
+                {repo.full_name}
+              </p>
+            </Link>
+            <Badge
+              variant={repo.private ? "destructive" : "default"}
+              className="text-xs bg-background border border-border py-1 h-5"
+            >
+              {repo.private ? (
+                <Lock className="w-4 h-4 text-muted-foreground" />
               ) : (
-                <Public sx={{ fontSize: 12 }} />
-              )
-            }
-            sx={{
-              bgcolor: "background.paper",
-              border: "1px solid #30363d",
-              fontSize: "12px",
-              height: "20px",
-              py: 1,
-            }}
-          />
-        </Box>
-        {repo.description && (
-          <Typography variant="body2" sx={{ color: "#7d8590", mb: 2 }}>
-            {repo.description}
-          </Typography>
-        )}
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 1,
-          ml: 2,
-          minWidth: "112px",
-        }}
-      >
-        <Link
-          to="/dashboard/repository/$repoID"
-          params={{ repoID: `${repo.id}` }}
-          search={{ repo: repo.full_name }}
-        >
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            sx={{ textTransform: "none" }}
+                <Globe className="w-4 h-4 text-muted-foreground" />
+              )}
+            </Badge>
+          </div>
+          {repo.description && (
+            <p className="text-sm text-muted-foreground mb-2">
+              {repo.description}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-center gap-1 ml-2 min-w-[112px]">
+          <Link
+            to="/dashboard/repository/$repoID"
+            params={{ repoID: `${repo.id}` }}
+            search={{ repo: repo.full_name }}
           >
-            View Vault
-          </Button>
-        </Link>
-      </Box>
-    </Box>
+            <Button variant="default" size="sm">
+              View Vault
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

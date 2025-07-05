@@ -5,7 +5,7 @@ WORKDIR /evault_webui
 COPY package*.json .
 COPY . .
 
-RUN npm ci
+RUN npm i
 
 EXPOSE 5173
 

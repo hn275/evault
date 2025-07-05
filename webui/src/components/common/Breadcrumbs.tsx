@@ -1,4 +1,10 @@
-import { Breadcrumbs as MUIBreadcrumbs, Link } from "@mui/material";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 type PathProps = {
   display: string;
@@ -11,19 +17,22 @@ type BreadcrumbsProps = {
 
 export function Breadcrumbs({ paths }: BreadcrumbsProps) {
   return (
-    <div role="presentation">
-      <MUIBreadcrumbs aria-label="breadcrumb">
+    <Breadcrumb>
+      <BreadcrumbList>
         {paths.map((path) => (
-          <Link
-            underline="hover"
-            color="inherit"
-            href={path.href}
-            target={path.href.startsWith("http") ? "_blank" : "_self"}
-          >
-            {path.display}
-          </Link>
+          <>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                href={path.href}
+                target={path.href.startsWith("http") ? "_blank" : "_self"}
+              >
+                {path.display}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+          </>
         ))}
-      </MUIBreadcrumbs>
-    </div>
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }

@@ -1,13 +1,12 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import {
   paramParser,
   type GitHubOAuthSearchParamResult,
 } from "../../utils/zod/gitHubParams";
 import { useAuthGithub } from "../../hooks/auth";
-import { CircularProgress, Link, Stack, Typography } from "@mui/material";
 import { AnimatePresence, motion } from "motion/react";
-import { Link as RouterLink } from "@tanstack/react-router";
 import { useLoadingText } from "../../hooks/loadingText";
+import { Spinner } from "@/components/ui/spinner";
 
 const TEXT_CHANGE_INTERVAL = 3000; // milliseconds
 const loadingTexts = [
@@ -46,12 +45,12 @@ function RouteComponent() {
 
 function ErrorState() {
   return (
-    <Stack mt="30vh" mx="auto" width="max-content" alignItems="center" gap={1}>
-      <Typography variant="h4">Authentication Failed</Typography>
-      <Link component={RouterLink} to="/">
+    <div className="pt-[30vh] mx-auto w-max flex flex-col items-center gap-1 h-screen">
+      <h4 className="text-2xl">Authentication Failed</h4>
+      <Link to="/">
         Go back home.
       </Link>
-    </Stack>
+    </div>
   );
 }
 
@@ -59,19 +58,13 @@ function LoadingState() {
   const { index } = useLoadingText(TEXT_CHANGE_INTERVAL, loadingTexts);
 
   return (
-    <Stack
-      gap={4}
-      mt="30vh"
-      justifyItems="center"
-      alignItems="center"
-      mx="auto"
-    >
-      <Typography variant="h4" color="text.primary">
+    <div className="pt-[30vh] mx-auto w-max flex flex-col items-center gap-4 h-screen">
+      <h4 className="text-2xl">
         Authenticating with GitHub
-      </Typography>
+      </h4>
 
-      <Stack justifyItems="center" alignItems="center" gap={2}>
-        <CircularProgress />
+      <div className="flex flex-col items-center gap-2">
+        <Spinner size="large" />
         <AnimatePresence mode="wait">
           {loadingTexts.map((text, idx) => {
             return index === idx ? (
@@ -81,14 +74,14 @@ function LoadingState() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
               >
-                <Typography variant="body1" color="text.secondary">
+                <p className="text-sm text-muted-foreground">
                   {text}
-                </Typography>
+                </p>
               </motion.div>
             ) : null;
           })}
         </AnimatePresence>
-      </Stack>
-    </Stack>
+      </div>
+    </div>
   );
 }

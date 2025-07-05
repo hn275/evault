@@ -1,57 +1,349 @@
-# React + TypeScript + Vite
+# eVault UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## ShadCN UI library
 
-Currently, two official plugins are available:
+### Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This project uses **ShadCN UI** as the primary component library, providing a comprehensive set of accessible, customizable, and modern UI components built on top of Radix UI primitives and styled with Tailwind CSS.
 
-## Expanding the ESLint configuration
+We're using tweakcn's Caffeine theme for our UI theme, example can be found here https://tweakcn.com/.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Configuration
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-      tsconfigRootDir: import.meta.dirname,
+The ShadCN UI setup is configured through `components.json`:
+
+```json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/index.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "iconLibrary": "lucide"
+}
+```
+
+**Key Configuration Details:**
+
+- **Style**: Uses "new-york" style variant
+- **Icon Library**: Lucide React icons
+- **CSS Variables**: Enabled for theming support
+- **Path Aliases**: Configured for clean imports
+
+### Available Components
+
+The following ShadCN UI components are currently available in `/src/components/ui/`:
+
+| Component | File | Description |
+|-----------|------|-------------|
+| **Avatar** | `avatar.tsx` | User profile pictures with fallback |
+| **Badge** | `badge.tsx` | Status indicators and labels |
+| **Breadcrumb** | `breadcrumb.tsx` | Navigation path display |
+| **Button** | `button.tsx` | Clickable actions with variants |
+| **Dialog** | `dialog.tsx` | Modal dialogs and overlays |
+| **Input** | `input.tsx` | Text input fields |
+| **Progress** | `progress.tsx` | Progress bars and indicators |
+| **Skeleton** | `skeleton.tsx` | Loading state placeholders |
+| **Spinner** | `spinner.tsx` | Loading indicators |
+| **Toaster** | `sonner.tsx` | Toast notifications |
+
+### Theme System
+
+#### CSS Variables
+
+The theme system uses CSS custom properties defined in `src/index.css`:
+
+```css
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  /* ... more variables */
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  /* ... dark mode overrides */
+}
+```
+
+#### Color Palette
+
+- **Background/Foreground**: Main surface colors
+- **Primary**: Main brand color for actions
+- **Secondary**: Secondary actions and elements
+- **Muted**: Subtle text and backgrounds
+- **Accent**: Hover states and highlights
+- **Destructive**: Error and danger states
+- **Border/Input**: Form and border colors
+
+### Usage Patterns
+
+#### Basic Import and Usage
+
+```tsx
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+// Basic usage
+<Button variant="default" size="sm">
+  Click me
+</Button>
+```
+
+#### Component Composition
+
+Complex components are built by composing multiple ShadCN primitives:
+
+```tsx
+// Example from NewVaultForm.tsx
+<Dialog open={open} onOpenChange={setDialogOpen}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>New Vault</DialogTitle>
+      <DialogDescription>
+        Please enter a password to create a new vault.
+      </DialogDescription>
+    </DialogHeader>
+    
+    <Input
+      type="password"
+      className="my-1"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+    />
+    
+    <DialogFooter>
+      <Button variant="default" type="submit">
+        Submit
+      </Button>
+      <Button variant="outline" onClick={cancel}>
+        Cancel
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+```
+
+#### Styling with Class Variants
+
+Components use `class-variance-authority` (CVA) for variant management:
+
+```tsx
+// Button variants
+<Button variant="default">Primary Action</Button>
+<Button variant="outline">Secondary Action</Button>
+<Button variant="destructive">Delete</Button>
+<Button variant="ghost">Subtle Action</Button>
+
+// Size variants
+<Button size="sm">Small</Button>
+<Button size="default">Default</Button>
+<Button size="lg">Large</Button>
+```
+
+#### Custom Styling
+Use the `cn()` utility function for conditional classes:
+
+```tsx
+import { cn } from "@/lib/utils";
+
+<Button 
+  className={cn(
+    "custom-class",
+    isLoading && "opacity-50",
+    variant === "special" && "bg-gradient-to-r from-blue-500 to-purple-600"
+  )}
+>
+  Custom Button
+</Button>
+```
+
+### Architecture Integration
+
+#### Component Organization
+
+```md
+src/
+├── components/
+│   ├── ui/              # ShadCN UI components
+│   ├── common/          # Shared app components
+│   └── dashboard/       # Feature-specific components
+├── lib/
+│   └── utils.ts         # Utility functions (cn, etc.)
+└── routes/              # Route components
+```
+
+#### Import Patterns
+
+```tsx
+// UI components (ShadCN)
+import { Button } from "@/components/ui/button";
+
+// Application components
+import { RepositoryCard } from "@/components/dashboard/RepositoryCard";
+
+// Common utilities
+import { cn } from "@/lib/utils";
+```
+
+### Best Practices
+
+#### 1. Component Composition
+
+- Use compound components (Dialog, DialogContent, DialogHeader, etc.)
+- Prefer composition over complex prop APIs
+- Keep components focused on single responsibilities
+
+#### 2. Styling Guidelines
+
+- Use CSS variables for consistent theming
+- Leverage component variants instead of custom CSS
+- Use `cn()` for conditional styling
+- Maintain consistent spacing using Tailwind classes
+
+#### 3. Accessibility
+
+- ShadCN components come with built-in accessibility features
+- Always provide proper labels and descriptions
+- Use semantic HTML elements through component props
+
+#### 4. Performance
+
+- Import only needed components
+- Use `asChild` prop for polymorphic components when needed
+- Leverage React.memo for expensive re-renders if necessary
+
+### Example Usage in Codebase
+
+#### Navigation with Breadcrumbs
+
+```tsx
+// From Breadcrumbs.tsx
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+<Breadcrumb>
+  <BreadcrumbList>
+    <BreadcrumbItem>
+      <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+    </BreadcrumbItem>
+    <BreadcrumbSeparator />
+    <BreadcrumbItem>
+      <BreadcrumbLink href="/repository">Repository</BreadcrumbLink>
+    </BreadcrumbItem>
+  </BreadcrumbList>
+</Breadcrumb>
+```
+
+#### User Profile Display
+
+```tsx
+// From dashboard/index.tsx
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+<Avatar>
+  <AvatarImage src={user.avatar_url} alt={user.name} />
+  <AvatarFallback>{user.name[0]}</AvatarFallback>
+</Avatar>
+```
+
+#### Loading States
+
+```tsx
+// Loading skeleton
+import { Skeleton } from "@/components/ui/skeleton";
+
+<div className="space-y-2">
+  <Skeleton className="h-4 w-full" />
+  <Skeleton className="h-4 w-3/4" />
+  <Skeleton className="h-4 w-1/2" />
+</div>
+
+// Loading spinner
+import { Spinner } from "@/components/ui/spinner";
+
+<Spinner size="medium" show={isLoading}>
+  Loading...
+</Spinner>
+```
+
+### Customization and Extension
+
+#### Adding New Components
+
+To add a new ShadCN component:
+
+1. Use the ShadCN CLI: `npx shadcn-ui@latest add [component-name]`
+2. Components will be automatically added to `src/components/ui/`
+3. Import and use throughout the application
+
+#### Theme Customization
+
+Modify CSS variables in `src/index.css` to customize the theme:
+
+```css
+:root {
+  --radius: 0.5rem;        /* Adjust border radius */
+  --primary: oklch(0.3 0.2 250);  /* Change primary color */
+}
+```
+
+#### Custom Variants
+
+Extend component variants by modifying the CVA configuration:
+
+```tsx
+// In a component file
+const buttonVariants = cva(
+  "...", // base classes
+  {
+    variants: {
+      variant: {
+        // ... existing variants
+        custom: "bg-gradient-to-r from-pink-500 to-violet-500",
+      },
     },
-  },
-});
+  }
+);
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Troubleshooting
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
+#### Common Issues
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    "react-x": reactX,
-    "react-dom": reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs["recommended-typescript"].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-});
-```
+1. **Import Errors**: Ensure path aliases are correctly configured in `tsconfig.json`
+2. **Styling Issues**: Check if CSS variables are properly loaded
+3. **Theme Not Applied**: Verify dark mode class toggling works correctly
+
+#### Development Tips
+
+- Use browser dev tools to inspect CSS variable values
+- Test components in both light and dark modes
+- Verify accessibility with screen readers
+- Check responsive behavior across different screen sizes
 
 ## Architecture
 
@@ -109,11 +401,6 @@ The following are guidelines for what goes where within the code base, please no
 5. **Types**
    - For Props, define where the component is
    - For shared types across files, define within the folder
-
-### Guidelines for styling
-
-- Less than 5 style overrides: props declared styles
-- More than 5 or props declared styles not available: sx prop object
 
 ### Guidelines for new routes
 

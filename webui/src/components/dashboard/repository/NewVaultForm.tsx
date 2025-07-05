@@ -1,19 +1,19 @@
 import {
-  TextField,
-  Button,
+  Dialog,
   DialogContent,
-  DialogActions,
-  Stack,
-  DialogContentText,
-} from "@mui/material";
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-
-import DialogTitle from "@mui/material/DialogTitle";
-import Dialog from "@mui/material/Dialog";
 import { useRouter } from "@tanstack/react-router";
-import { useNotifications } from "@toolpad/core/useNotifications";
 import { createNewRepository } from "../../../services/repository";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export interface NewVaultDialogProps {
   repoID: number;
@@ -34,87 +34,91 @@ export function NewVault({
     setDialogOpen,
   );
   return (
-    <Dialog
-      open={open}
-      onClose={() => setDialogOpen(false)}
-      slotProps={{
-        paper: {
-          component: "form",
-          onSubmit: (e: React.FormEvent<HTMLFormElement>) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          },
-        },
-      }}
-    >
-      <DialogTitle>New Vault</DialogTitle>
-      <DialogContent dividers>
-        <DialogContentText>
-          Please enter a password to create a new vault for this repository.
-        </DialogContentText>
-        <Stack>
-          {/* TODO: This can be refactored into another component */}
-          <form.Field
-            name="password"
-            children={(field) => (
-              <TextField
-                label="Password"
-                variant="outlined"
-                type="password"
-                size="small"
-                sx={{
-                  my: 1,
-                }}
-                id={field.name}
-                name={field.name}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-            )}
-          />
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            cancel();
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New Vault</DialogTitle>
+            <DialogDescription>
+              Please enter a password to create a new vault for this repository.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            {/* TODO: This can be refactored into another component */}
+            <form.Field
+              name="password"
+              children={(field) => (
+                <Input
+                  type="password"
+                  size={1}
+                  className="my-1"
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+              )}
+            />
 
-          <form.Field
-            name="passwordConfirm"
-            children={(field) => (
-              <TextField
-                label="Re-enter password"
-                variant="outlined"
-                type="password"
-                size="small"
-                id={field.name}
-                name={field.name}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-            )}
-          />
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <form.Subscribe
-          selector={(state) => [state.canSubmit, state.isSubmitting]}
-          children={([canSubmit, isSubmitting]) => (
-            <>
-              <Button
-                variant="contained"
-                type="submit"
-                disabled={!canSubmit || isSubmitting}
-              >
-                {isSubmitting ? "..." : "Submit"}
-              </Button>
-              <Button variant="outlined" onClick={cancel}>
-                Cancel
-              </Button>
+            <form.Field
+              name="passwordConfirm"
+              children={(field) => (
+                <Input
+                  type="password"
+                  size={1}
+                  className="my-1"
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+              )}
+            />
+          </div>
 
-              {!form.state.isValid && <em>{form.state.errors.join(",")}</em>}
-            </>
-          )}
-        />
-      </DialogActions>
-    </Dialog>
+          <DialogFooter>
+            <form.Subscribe
+              selector={(state) => [state.canSubmit, state.isSubmitting]}
+              children={([canSubmit, isSubmitting]) => (
+                <>
+                  <Button
+                    variant="default"
+                    type="submit"
+                    disabled={!canSubmit || isSubmitting}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      form.handleSubmit();
+                    }}
+                  >
+                    {isSubmitting ? "..." : "Submit"}
+                  </Button>
+                  <DialogClose asChild>
+                    <Button variant="outline" onClick={cancel}>
+                      Cancel
+                    </Button>
+                  </DialogClose>
+
+                  {!form.state.isValid && (
+                    <em>{form.state.errors.join(",")}</em>
+                  )}
+                </>
+              )}
+            />
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -129,7 +133,6 @@ function useNewRepository(
   setDialogOpen: (open: boolean) => void,
 ) {
   const router = useRouter();
-  const notifications = useNotifications();
   const mut = useMutation({
     mutationKey: ["newRepoForm"],
     mutationFn: async (formData: NewFormProps) => {
@@ -146,18 +149,12 @@ function useNewRepository(
           if (r.status === 201 || r.status === 200) {
             setDialogOpen(false);
             router.invalidate();
-            notifications.show("Vault created successfully", {
-              severity: "success",
-              autoHideDuration: 3000,
-            });
+            toast.success("Vault created successfully");
           }
           return r;
         })
         .catch((e) => {
-          notifications.show("Failed to create vault", {
-            severity: "error",
-            autoHideDuration: 3000,
-          });
+          toast.error("Failed to create vault");
           throw e;
         });
     },
