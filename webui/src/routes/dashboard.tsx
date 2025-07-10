@@ -1,4 +1,4 @@
-import { Navbar} from "@/components/dashboard/Navbar";
+import { Navbar } from "@/components/dashboard/Navbar";
 import { createFileRoute } from "@tanstack/react-router";
 import { Outlet } from "@tanstack/react-router";
 
