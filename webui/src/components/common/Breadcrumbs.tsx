@@ -24,6 +24,7 @@ export function Breadcrumbs({ paths }: BreadcrumbsProps) {
           <Fragment key={path.href}>
             <BreadcrumbItem>
               <BreadcrumbLink
+                className="hover:bg-black/10 dark:hover:bg-white/10 rounded-md p-1"
                 href={path.href}
                 target={path.href.startsWith("http") ? "_blank" : "_self"}
               >
