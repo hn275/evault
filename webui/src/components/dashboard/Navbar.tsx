@@ -16,8 +16,6 @@ import { Search } from "lucide-react";
 export function Navbar() {
   const { user } = useUser();
 
-  const breadcrumbs = [{ display: "Dashboard", href: "/dashboard" }];
-
   return (
     <div className="flex justify-between items-center w-full p-4 border-b bg-background/90">
       <div className="flex items-center gap-4">
@@ -25,7 +23,7 @@ export function Navbar() {
           {/* TODO: add logo */}
           eVault
         </Link>
-        <Breadcrumbs paths={breadcrumbs} />
+        <Breadcrumbs />
       </div>
       <div className="flex items-center align-middle gap-2">
         {/* TODO: add search functionality */}
