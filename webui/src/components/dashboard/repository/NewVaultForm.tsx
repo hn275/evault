@@ -181,7 +181,7 @@ function useNewRepository(
   const cancel = () => {
     form.reset();
     setDialogOpen(false);
-    router.history.back();
+    router.navigate({ to: "/dashboard" });
   };
 
   return { form, cancel };
