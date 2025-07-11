@@ -1,5 +1,7 @@
 # eVault UI
+
 <!-- Table of Content -->
+
 ## Table of Contents
 
 - [eVault UI](#evault-ui)
@@ -82,9 +84,9 @@ function MyPage() {
     paths: [
       { display: "Dashboard", href: "/dashboard" },
       { display: "Settings", href: "/settings" },
-    ]
+    ],
   });
-  
+
   return <div>Page content</div>;
 }
 ```
@@ -130,10 +132,10 @@ Use Zustand for client state, TanStack Query for server state:
 const useAppState = () => {
   // Client state from Zustand
   const user = useUser();
-  
+
   // Server state from TanStack Query
   const { data: repositories } = useRepositoriesQuery();
-  
+
   return { user, repositories };
 };
 ```
