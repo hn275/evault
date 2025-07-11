@@ -4,12 +4,12 @@ import {
   useLoaderData,
   useSearch,
 } from "@tanstack/react-router";
-import { Breadcrumbs } from "../../../components/common/Breadcrumbs";
 import { NewVault } from "../../../components/dashboard/repository/NewVaultForm";
 import { useState } from "react";
 import { getRepositoryByIDWithOwnerValidation } from "../../../services/repository";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useBreadcrumbPaths } from "@/hooks/breadcrumbs";
 
 type SearchParams = {
   repo: string;
@@ -54,6 +54,14 @@ function RouteComponent() {
     from: "/dashboard/repository/$repoID",
   });
 
+  useBreadcrumbPaths(
+    [
+      { display: "Dashboard", href: "/dashboard" },
+      { display: repoFullName, href: `https://github.com/${repoFullName}` },
+    ],
+    [repoFullName],
+  );
+
   const [newVaultDialogOpen, setNewVaultDialogOpen] = useState(
     repoID.status === 404,
   );
@@ -64,21 +72,8 @@ function RouteComponent() {
     );
   }
 
-  if (repoID.status === 403) {
-    toast.error(
-      "You are not authorized to create a vault for this repository.",
-    );
-  }
-
-  // TODO: Breadcrumbs should be a common layout route
-  const breadcrumbs = [
-    { display: "Dashboard", href: "/dashboard" },
-    { display: repoFullName, href: `https://github.com/${repoFullName}` },
-  ];
-
   return (
     <>
-      <Breadcrumbs paths={breadcrumbs} />
       <NewVault
         repoID={repoID.id}
         repoFullName={repoFullName}
