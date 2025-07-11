@@ -1,4 +1,142 @@
 # eVault UI
+<!-- Table of Content -->
+## Table of Contents
+
+- [eVault UI](#evault-ui)
+  - [State management](#state-management)
+    - [Zustand](#zustand)
+      - [Usage Patterns](#usage-patterns-1)
+      - [Basic Store Structure](#basic-store-structure)
+      - [Current Implementation](#current-implementation)
+  - [ShadCN UI library](#shadcn-ui-library)
+    - [Overview](#overview)
+    - [Color Palette](#color-palette)
+    - [Usage Patterns](#usage-patterns)
+      - [Basic Import and Usage](#basic-import-and-usage)
+      - [Component Composition](#component-composition)
+
+## State management
+
+### Zustand
+
+This project uses **Zustand** as the primary state management solution for client-side state. Zustand is a lightweight, simple state management library that works well with TypeScript and doesn't require providers.
+
+#### Usage Patterns
+
+#### Basic Store Structure
+
+```tsx
+import { create } from "zustand";
+
+interface StoreState {
+  data: DataType;
+  isLoading: boolean;
+}
+
+const useStore = create<StoreState>()((set) => ({
+  data: null,
+  isLoading: false,
+  setData: (data) => set({ data }),
+  setLoading: (isLoading) => set({ isLoading }),
+}));
+```
+
+#### Current Implementation
+
+Our breadcrumbs store demonstrates the recommended patterns:
+
+```tsx
+// store/breadcrumbsStore.ts
+import type { Breadcrumbs } from "@/types/Breadcrumb";
+import { create } from "zustand";
+
+interface BreadcrumbsState {
+  breadcrumbs: Breadcrumbs;
+}
+
+const useBreadcrumbsStore = create<BreadcrumbsState>()((set) => ({
+  breadcrumbs: { paths: [] },
+  setBreadcrumbs: (breadcrumbs: Breadcrumbs) => set({ breadcrumbs }),
+}));
+
+// Selector hooks for accessing specific state
+export const useBreadcrumbs = () => {
+  return useBreadcrumbsStore((state) => state.breadcrumbs);
+};
+
+// Action functions for business logic
+export const setBreadcrumbs = (breadcrumbs: Breadcrumbs) => {
+  useBreadcrumbsStore.setState({ breadcrumbs });
+};
+```
+
+#### Component Usage
+
+```tsx
+// Using breadcrumbs in components
+import { useBreadcrumbs } from "@/hooks/breadcrumbs";
+
+function MyPage() {
+  // Automatically sets breadcrumbs when component mounts
+  useBreadcrumbs({
+    paths: [
+      { display: "Dashboard", href: "/dashboard" },
+      { display: "Settings", href: "/settings" },
+    ]
+  });
+  
+  return <div>Page content</div>;
+}
+```
+
+### Best Practices
+
+#### 1. Store Organization
+
+- Keep stores focused on specific domains (auth, UI state, etc.)
+- Export selector hooks for accessing state
+- Export action functions for business logic
+
+#### 2. TypeScript Integration
+
+Always use properly typed interfaces:
+
+```tsx
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => void;
+}
+```
+
+#### 3. Selector Patterns
+
+Use selective subscriptions to avoid unnecessary re-renders:
+
+```tsx
+// Good: Only subscribe to specific state slices
+const username = useAuthStore((state) => state.user?.name);
+
+// Avoid: Subscribing to entire store
+const { user, isLoading, isAuthenticated } = useAuthStore();
+```
+
+#### 4. Integration with TanStack Query
+
+Use Zustand for client state, TanStack Query for server state:
+
+```tsx
+const useAppState = () => {
+  // Client state from Zustand
+  const user = useUser();
+  
+  // Server state from TanStack Query
+  const { data: repositories } = useRepositoriesQuery();
+  
+  return { user, repositories };
+};
+```
 
 ## ShadCN UI library
 
