@@ -1,8 +1,4 @@
-export type User = {
-  id: number;
-  login: string;
-  email: string;
-  avatar_url: string;
-  name: string;
-  type: string;
-};
+import { userValidator } from "@/lib/validator/user"
+import { z } from "zod/v4";
+
+export type User = z.infer<typeof userValidator>;
