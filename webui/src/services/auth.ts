@@ -2,11 +2,12 @@ import type { User } from "../types/User";
 import { httpClient } from "../utils/axios";
 import { type AxiosPromise } from "axios";
 import type { GitHubOAuthSearchParams } from "../utils/zod/gitHubParams";
+import { userSchema } from "@/lib/validator/user";
 
 // Fetch the user's information from the API
 export async function getUser(): Promise<User> {
   const r = await httpClient.get("/user");
-  return r.data as User;
+  return userSchema.parse(r.data);
 }
 
 // Exchange the GitHub authentication
