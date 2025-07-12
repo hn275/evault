@@ -1,5 +1,4 @@
 services:
-
   traefik:
     container_name: evault-traefik
     image: traefik:v3.4
@@ -15,7 +14,6 @@ services:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
-
   server:
     container_name: evault-server
     build:
@@ -32,7 +30,6 @@ services:
     depends_on:
       - redis
       - postgres
-  
   webui:
     container_name: evault-webui
     build:
@@ -44,8 +41,8 @@ services:
       - "traefik.http.routers.webui.entrypoints=web"
       - "traefik.http.services.webui.loadbalancer.server.port=5173"
     volumes:
-      - ./webui/src:/evault_webui/src
-    
+      - ./webui:/evault_webui
+      - /evault_webui/node_modules
   redis:
     container_name: evault-redis
     image: redis:8.0.2-alpine
@@ -56,7 +53,6 @@ services:
     command: redis-server --appendonly yes
     environment:
       - REDIS_REPLICATION_MODE=master
-
   postgres:
     container_name: evault-postgres
     image: postgres:17.5-alpine3.22
@@ -68,7 +64,6 @@ services:
       - POSTGRES_DB=evault
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-
 volumes:
   pg-data:
   redis-data:
