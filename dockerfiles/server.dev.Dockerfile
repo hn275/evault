@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y gcc python3-dev libpq-dev
 RUN pip install uv
 
 COPY server server
+COPY alembic alembic
+COPY alembic.ini alembic.ini
 COPY pyproject.toml .
 COPY uv.lock .
 

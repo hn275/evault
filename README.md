@@ -20,7 +20,7 @@ docker compose up
 First time running, the database will need to be migrated.
 
 ```sh
-uv run alembic upgrade head
+docker exec -it evault-server sh -c 'uv run alembic upgrade head'
 ```
 
 ## Run it locally
