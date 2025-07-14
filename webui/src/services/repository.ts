@@ -13,8 +13,10 @@ export async function getRepositoryByIDWithOwnerValidation(
       repo: repoFullName,
     },
     validateStatus: (status) => {
-      const statusOk = status >= 200 && status < 300;
-      return statusOk || status === 404;
+      let statusOk = status >= HttpStatusCode._200_OK;
+      statusOk ||= status < HttpStatusCode._300_MULTIPLE_CHOICES;
+      statusOk ||= status === HttpStatusCode._404_NOT_FOUND;
+      return statusOk;
     },
   });
   return { id: repoID, status: r.status };
