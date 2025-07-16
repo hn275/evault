@@ -5,7 +5,7 @@ from .config import REDIS_HOST, REDIS_PORT_DEFAULT
 from .types import UserSession
 
 
-_redis = Redis(REDIS_HOST, port=REDIS_PORT_DEFAULT)
+_redis = Redis(REDIS_HOST, port=REDIS_PORT_DEFAULT, decode_responses=True)
 
 _redis.ping()
 logger.info("Connected to redis")
@@ -30,7 +30,7 @@ def get_user_session(evault_access_token: str) -> UserSession:
 
     m = {}
     for key, val in d.items():
-        m[key.decode()] = val.decode()
+        m[key] = val
 
     m["user.id"] = int(m["user.id"])
     return UserSession.from_flat_map(m)
@@ -53,7 +53,7 @@ def cache_token_poll(session_id: str, evault_access_token: str, ttl: int):
 def get_token_poll(session_id: str) -> str | None:
     t = _redis.getdel(f"evault-token-poll:{session_id}")
     if t:
-        return t.decode()
+        return t
 
     return None
 
