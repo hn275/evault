@@ -1,14 +1,10 @@
-export type Repository = {
-  id: number;
-  full_name: string;
-  private: boolean;
-  html_url: string;
-  description: null | string;
-  owner: RepoOwner;
-};
+import {
+  repoOwnerSchema,
+  repoSchema,
+  reposSchema,
+} from "@/lib/validator/repository";
+import { z } from "zod/v4";
 
-export type RepoOwner = {
-  id: number;
-  login: string;
-  avatar_url: string;
-};
+export type Repository = z.infer<typeof repoSchema>;
+export type Repositories = z.infer<typeof reposSchema>;
+export type RepoOwner = z.infer<typeof repoOwnerSchema>;
