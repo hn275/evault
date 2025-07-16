@@ -8,7 +8,7 @@ def access_token_extractor(
 ) -> str:
     if evault_access_token is None:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Access token not found/expired.",
         )
 
