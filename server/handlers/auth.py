@@ -10,8 +10,10 @@ from fastapi.responses import (
     RedirectResponse,
     Response,
 )
+from fastapi import Cookie, Depends
 from starlette.status import (
     HTTP_200_OK,
+    HTTP_204_NO_CONTENT,
     HTTP_302_FOUND,
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
@@ -24,6 +26,7 @@ from ..config import EVAULT_TOKEN_POLL_MAX_ATTEMPT
 from .. import cache, database as db
 from ..github import oauth as gh_oauth, client as gh_client
 from ..types import DeviceType, UserSession
+from ..middlewares.auth import access_token_extractor
 
 router = APIRouter(prefix="/api/github/auth", dependencies=[])
 
@@ -179,4 +182,12 @@ def auth_refresh(
         value=evault_access_token,
         expires=EVAULT_SESSION_TOKEN_TTL,
     )
+    return response
+
+
+@router.post("/logout", dependencies=[Depends(access_token_extractor)])
+async def logout(evault_access_token: str | None = Cookie(None)):
+    cache.remove_session(evault_access_token)
+    response = Response(status_code=HTTP_204_NO_CONTENT)
+    response.set_cookie(key="evault_access_token", value="", max_age=0)
     return response

@@ -3,6 +3,7 @@ import { useRepository } from "../../hooks/repository";
 import { RepositoryList } from "../../components/dashboard/RepositoryList";
 import { RepositoryCardSkeleton } from "@/components/dashboard/RepositoryCardSkeleton";
 import { useBreadcrumbPaths } from "@/hooks/breadcrumbs";
+import { httpClient } from "@/utils/axios";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({
@@ -22,6 +23,15 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col gap-1">
+      <button
+        onClick={() =>
+          httpClient
+            .post("/auth/logout")
+            .then(() => console.log("route me to home page here."))
+        }
+      >
+        logout
+      </button>
       <div className="flex items-center space-x-4">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold">Repositories</h1>
