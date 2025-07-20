@@ -9,13 +9,13 @@ import {
 import { Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "../common/Breadcrumbs";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useUser } from "@/hooks/auth";
+import { useLogout, useUser } from "@/hooks/auth";
 import { Input } from "../ui/input";
 import { Search } from "lucide-react";
 
 export function Navbar() {
   const { user } = useUser();
-
+  const logout = useLogout();
   return (
     <div className="flex justify-between items-center w-full p-4 border-b bg-background/90">
       <div className="flex items-center gap-4">
@@ -53,7 +53,7 @@ export function Navbar() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Sign out</DropdownMenuItem>
+            <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
