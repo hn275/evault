@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import type { User } from "../types/User";
-import { getGitHubAuth, getUser } from "../services/auth";
+import { getGitHubAuth, getUser, logout } from "../services/auth";
 import { useQuery } from "@tanstack/react-query";
 import { httpClient } from "../utils/axios";
 
@@ -17,6 +17,13 @@ export function useUser() {
   }, [nav]);
 
   return { user };
+}
+
+export function useLogout() {
+  const nav = useNavigate();
+  return () => {
+    logout().then(() => nav({ to: "/" }));
+  };
 }
 
 export function useAuthGithub() {

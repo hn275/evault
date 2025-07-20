@@ -17,3 +17,7 @@ export function getGitHubAuth(
   const p = new URLSearchParams(params);
   return httpClient.get(`/auth/token?${p.toString()}`);
 }
+
+export function logout(): AxiosPromise<void> {
+  return httpClient.post("/auth/logout");
+}
