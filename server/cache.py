@@ -72,7 +72,7 @@ def get_auth_url(session_id: str) -> str:
             detail="Login link expired.",
         )
 
-    return t.decode()
+    return t
 
 
 def renew_auth_url(session_id: str, ttl: int):
@@ -85,6 +85,14 @@ def remove_auth_url(session_id: str):
     key = _make_auth_url_key(session_id)
     url_removed = _redis.delete(key)
     if url_removed != 1:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+
+def remove_session(session_id: str):
+    key = _make_session_key(session_id)
+
+    session_removed = _redis.delete(key) == 1
+    if not session_removed:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
